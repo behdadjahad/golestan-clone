@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 
 from user.models import User
-from user.serializers import UserLoginSerializer
+from user.serializers import UserLoginSerializer, ChangePasswordSerializer
 
 
 # class SignUpView(APIView):
@@ -20,8 +20,9 @@ from user.serializers import UserLoginSerializer
 
 
 class LoginView(APIView):
+    # serializer_class = UserLoginSerializer
     permission_classes = [permissions.AllowAny]
-    
+
     def post(self, request):
         serializer = UserLoginSerializer(data=request.data)
 
@@ -44,3 +45,19 @@ class LogoutView(APIView):
         except Exception as e:
             return Response({'ERROR': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
+
+class ChangePasswordView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        if request.method == 'POST':
+            serializer = ChangePasswordSerializer(data=request.data)
+            if serializer.is_valid():
+                user = request.user
+                if user.check_password(serializer.data.get('old_password')):
+                    user.set_password(serializer.data.get('new_password'))
+                    user.save()
+                    return Response({'message': 'Password changed successfully.'}, status=status.HTTP_200_OK)
+                return Response({'ERROR': 'Incorrect old password.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
