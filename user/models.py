@@ -16,5 +16,5 @@ class User(AbstractUser):
     updated_at = models.DateTimeField(auto_now=True, verbose_name='updated at')
 
     def __str__(self):
-        return f"user: {self.username}."
+        return self.username
     
