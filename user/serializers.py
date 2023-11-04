@@ -24,34 +24,41 @@ User = get_user_model()
 
 
 class UserLoginSerializer(serializers.Serializer):
-        username = serializers.CharField(max_length=150)
-        password = serializers.CharField(max_length=128, write_only=True)
+    username = serializers.CharField(max_length=150)
+    password = serializers.CharField(max_length=128, write_only=True)
     
-        def validate(self, data): 
-            username = data.get("username", None)
-            password = data.get("password", None)
-            if username and password:
-                if User.objects.filter(username=username).exists():
-                    user = User.objects.get(username=username)
-                    if not user.check_password(password):
-                        msg = _('Wrong credentials!')
-                        raise serializers.ValidationError(msg, code='authorization')
-                        # raise serializers.ValidationError()
-                    else:
-                        return user
-                else:
-                    msg = _('Unable to log in with provided credentials.')
+    def validate(self, data):
+        username = data.get("username", None)
+        password = data.get("password", None)
+        if username and password:
+            if User.objects.filter(username=username).exists():
+                user = User.objects.get(username=username)
+                if not user.check_password(password):
+                    msg = _('Wrong credentials!')
                     raise serializers.ValidationError(msg, code='authorization')
+                        # raise serializers.ValidationError()
+                else:
+                    return user
             else:
-                msg = _('Must include "username" and "password".')
+                msg = _('Unable to log in with provided credentials.')
                 raise serializers.ValidationError(msg, code='authorization')
+        else:
+            msg = _('Must include "username" and "password".')
+            raise serializers.ValidationError(msg, code='authorization')
 
      
 class ChangePasswordSerializer(serializers.Serializer):
     old_password = serializers.CharField(required=True)
     new_password = serializers.CharField(required=True)
+    confirm_password = serializers.CharField(required=True)
+
+    def validate(self, data):
+        if data['new_password'] != data['confirm_password']:
+            raise serializers.ValidationError("New password and confirmed password are not match")
+        return data
 
 
-class ResetPasswordEmailSerializer(serializers.Serializer):
+class ForgotPasswordSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
+
 
