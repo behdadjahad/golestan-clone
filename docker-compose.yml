@@ -1,0 +1,51 @@
+version: '3.8'
+
+
+services:
+  pgdb :
+    image: postgres:14.1-alpine
+    restart: on-failure
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DATABASE: ${DB_NAME}
+    volumes:
+      - "postgres_data:/var/lib/postgresql/golestanclonedata"
+    ports:
+      - "5432:5432"
+    networks :
+     - golestanclonedata-network
+
+
+  api :
+    build : .
+    restart: on-failure
+    # env_file : .env
+    environment :
+      DB_NAME: "mydbuser"
+      DB_USER: "mydbuser"
+      DB_PASSWORD: "mydbpassword"
+      DB_HOST: pgdb
+      DB_PORT: 5432
+      SECRET_KEY: 'django-insecure-^n_$_bf^hmgfgvrt0b2#t8yl*7g%s4&&-p-mrb5nod9w_qkxgd'
+      DEBUG_MODE: "true"
+    ports:
+      - "8000:8000"
+    expose:
+      - "8000"
+    depends_on : 
+     -  pgdb
+    networks :
+     - golestanclonedata-network
+
+
+networks:
+  golestanclonedata-network :
+    driver: bridge
+
+
+volumes:
+  postgres_data:
+    driver: local
+
+  
