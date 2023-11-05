@@ -5,7 +5,7 @@ from faculty.models import ApprovedCourse, Department
 
 
 # Create your models here.
-class Term(models.Model) :
+class Term(models.Model):
     term_name = models.CharField(max_length=100)
     students_registered = models.ManyToManyField('account.Student', related_name='registered_term_students', blank=True) # add an update
     professor_registered = models.ManyToManyField('account.Professor', related_name='registered_term_professor', blank=True) # add an update
