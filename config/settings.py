@@ -35,7 +35,10 @@ INSTALLED_APPS = [
     'django_rest_passwordreset',
     # app
     'user.apps.UserConfig',
-
+    'term.apps.TermConfig',
+    'faculty.apps.FacultyConfig',
+    'account.apps.AccountConfig',
+    
 ]
 
 MIDDLEWARE = [
