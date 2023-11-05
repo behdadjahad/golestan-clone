@@ -151,4 +151,13 @@ CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESAULT_SERIALIZER = 'json'
 
-
+#Redis Configuration
+CHACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://localhost:6739/0',
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis_client.DefaultClient',
+        }
+    }
+}
