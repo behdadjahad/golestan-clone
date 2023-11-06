@@ -91,13 +91,13 @@ class Student(User) :
         
     
     def term_score(self, term_name) :
-        passed_courses = term_name.coursestudent_set.filter(term_taken=term_name).filter(course_status='passed')
+        passed_courses = term_name.coursestudent_set.filter(student=self).filter(term_taken=term_name).filter(course_status='passed')
         totall_score = 0
         totall_units = 0
         if passed_courses.exists() :
-            for course in passed_courses :
-                score = course.coursestudent_set.filter(student=self).first().student_score
-                units = course.units
+            for coursestu in passed_courses :
+                score = coursestu.student_score
+                units = coursestu.course.units
                 totall_score += (score * units)
                 totall_units += units
             if totall_units > 0 :

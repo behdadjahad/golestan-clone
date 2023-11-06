@@ -5,7 +5,7 @@ from term.models import Term, CourseStudent
 from django.utils import timezone
 from datetime import date
 
-class StudentTests(TestCase) :
+class StudentModelTests(TestCase) :
     def setUp(self) :
         term1 = Term.objects.create(
             term_name="test_term1",
@@ -38,7 +38,7 @@ class StudentTests(TestCase) :
         course3 = ApprovedCourse.objects.create(course_name="test_course3", faculty=faculty, units=1, course_type="practical")
         course4 = ApprovedCourse.objects.create(course_name="test_course4", faculty=faculty, units=4, course_type="specialized")
         professor = Professor.objects.create(username="test_professor" ,professor_number="12345", faculty=faculty, major="math", expertise="math", degree="phd")
-        student = Student.objects.create(
+        student1 = Student.objects.create(
             username="test_student",
             student_number="12345",
             intrance_term=term1,
@@ -47,10 +47,20 @@ class StudentTests(TestCase) :
             supervisor=professor,
             militery_service_status="exempt",
             )
-        CourseStudent.objects.create(student=student, course=course1, course_status="passed", student_score=18, term_taken=term1)
-        CourseStudent.objects.create(student=student, course=course2, course_status="passed", student_score=15, term_taken=term1)
-        CourseStudent.objects.create(student=student, course=course3, course_status="passed", student_score=14, term_taken=term1)
-        CourseStudent.objects.create(student=student, course=course4, course_status="active", term_taken=term2)
+        student2 = Student.objects.create(
+            username="test_student2",
+            student_number="123456",
+            intrance_term=term1,
+            faculty=faculty,
+            major=major,
+            supervisor=professor,
+            militery_service_status="exempt",
+            )
+        CourseStudent.objects.create(student=student1, course=course1, course_status="passed", student_score=18, term_taken=term1)
+        CourseStudent.objects.create(student=student1, course=course2, course_status="passed", student_score=15, term_taken=term1)
+        CourseStudent.objects.create(student=student1, course=course3, course_status="passed", student_score=14, term_taken=term1)
+        CourseStudent.objects.create(student=student1, course=course4, course_status="active", term_taken=term2)
+        CourseStudent.objects.create(student=student2, course=course1, course_status="passed", student_score=13, term_taken=term1)
         
     def test_create_student(self) :
         student = Student.objects.get(username="test_student")
@@ -72,25 +82,31 @@ class StudentTests(TestCase) :
         term1 = Term.objects.get(term_name="test_term1")
         term2 = Term.objects.get(term_name="test_term2")
         
-        self.assertEqual(student.term_score(term1), 15.0)
+        self.assertEqual(round(student.term_score(term1), 2), 16.33)
         self.assertEqual(student.term_score(term2), 0.0)
         
     def test_gpa(self) :
         student = Student.objects.get(username="test_student")
-        self.assertEqual(student.gpa, 15.0)
+        self.assertEqual(round(student.gpa, 2), 16.33)
         
     def test_active_courses(self) :
         student = Student.objects.get(username="test_student")
         coursestudent = CourseStudent.objects.filter(student=student, course_status="active")
-        self.assertEqual(student.active_courses, coursestudent)
+        acc_courses = []
+        for course in student.active_courses :
+            acc_courses.append(course.coursestudent_set.first()) 
+        self.assertEqual(acc_courses, list(coursestudent))
         
     def test_passed_courses(self) :
         student = Student.objects.get(username="test_student")
         coursestudent = CourseStudent.objects.filter(student=student, course_status="passed")
-        self.assertEqual(student.passed_courses, coursestudent)
+        pss_courses = []
+        for course in student.passed_courses :
+            pss_courses.append(course.coursestudent_set.first()) 
+        self.assertEqual(pss_courses, list(coursestudent))
         
 
-class ProfessorTests(TestCase) :
+class ProfessorModelTests(TestCase) :
     def setUp(self) :
         faculty = Faculty.objects.create(name="test_faculty")
         Professor.objects.create(username="test_professor" ,professor_number="12345", faculty=faculty, major="math", expertise="math", degree="phd")
@@ -115,7 +131,7 @@ class ProfessorTests(TestCase) :
         self.assertEqual(professor.presented_courses.all().count(), 1)
 
 
-class ITManagerTests(TestCase) :
+class ITManagerModelTests(TestCase) :
     def setUp(self) :
         ITManager.objects.create(username="test_itmanager" ,itmanager_number="12345")
 
@@ -128,11 +144,12 @@ class ITManagerTests(TestCase) :
         self.assertEqual(itmanager.itmanager_number, "12345")
 
         
-class EducationalAssistantTests(TestCase) :
+class EducationalAssistantModelTests(TestCase) :
     def setUp(self) :
         faculty = Faculty.objects.create(name="test_faculty")
-        major = Major.objects.create(name="test_major", faculty=faculty, department="test_department")
-        EducationalAssistant.objects.create(username="test_educationalassistant" ,educational_assistant_number="12345", faculty=faculty, major=major)
+        mjr = Major.objects.create(name="test_major", faculty=faculty, department="test_department")
+        ea = EducationalAssistant.objects.create(username="test_educationalassistant" ,educational_assistant_number="12345", faculty=faculty)
+        ea.major.add(mjr)
         
     def test_create_educationalassistant(self) :
         educationalassistant = EducationalAssistant.objects.get(username="test_educationalassistant")
@@ -142,5 +159,5 @@ class EducationalAssistantTests(TestCase) :
         self.assertEqual(educationalassistant.username, "test_educationalassistant")
         self.assertEqual(educationalassistant.educational_assistant_number, "12345")
         self.assertEqual(educationalassistant.faculty, faculty)
-        self.assertEqual(educationalassistant.major, major)
+        self.assertEqual(educationalassistant.major.all().first(), major)
         
