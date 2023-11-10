@@ -1,4 +1,4 @@
-version: '1.0'
+version: '3.7'
 
 services:
   minio:
@@ -6,23 +6,24 @@ services:
     container_name: minio
     ports:
       - "9000:9000"
-      - "9090:9090"
+      - "9001:9001"
     volumes:
       - data:/data
     environment:
-      - "MINIO_ROOT_USER:admin"
-      - "MINIO_ROOT_PASSWORD=admin"
-    command: server /data --console-address :9090
+      - "MINIO_ROOT_USER=user"
+      - "MINIO_ROOT_PASSWORD=password"
+    command: server /data --console-address :9001
   createbucket:
     image: minio/mc:latest
     depends_on:
       - minio
     entrypoint: >
       /bin/sh -c "
-      /usr/bin/mc config host add --api s3v4 http://minio:9000 user password;
+      /usr/bin/mc config host add --api s3v4 s3 http://minio:9000 user password;
       /usr/bin/mc mb s3/static/;
+      /usr/bin/mc anonymous set download s3/static;
       "
-  django_golestan:
+  django_s3_mock:
     build:
       context: .
     ports:
@@ -32,3 +33,6 @@ services:
     depends_on:
       - minio
       - createbucket
+
+volumes:
+  data:
