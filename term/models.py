@@ -26,30 +26,22 @@ class Term(models.Model) :
 
 
 class TermCourse(models.Model) :
-    # CLASS_DAYS_CHOICES = (
-    #     ('Sat', 'Saturday'),
-    #     ('Sun', 'Sunday'),
-    #     ('Mon', 'Monday'),
-    #     ('Tue', 'Tuesday'),
-    #     ('Wed', 'Wednesday'),
-    #     ('Thu', 'Thursday'),
-    #     ('Fri', 'Friday'),
-    # )
-    name = models.ForeignKey(ApprovedCourse, on_delete=models.PROTECT) # added
+    name = models.ForeignKey(ApprovedCourse, on_delete=models.PROTECT) # added # its better to be course instead of name
     class_days_and_times = models.JSONField(help_text="Select class days and times in JSON format")
-    exam_time = models.DateTimeField()
-    exam_place = models.CharField(max_length=100)
+    exam_time = models.DateTimeField(null=True, blank=True)
+    exam_place = models.CharField(max_length=100, null=True, blank=True)
     course_professor = models.ForeignKey(Professor, on_delete=models.PROTECT)
     course_capacity = models.PositiveIntegerField()      # add def update?
     term = models.ForeignKey(Term, on_delete=models.PROTECT)
     # departmant = models.ManyToManyField(Department) # added
     
     def __str__(self):
-        formatted_days_and_times = [
-            f"{day_and_time['day']} at {day_and_time['time'].strftime('%I:%M %p')}"
-            for day_and_time in self.class_days_and_times
-        ]
-        return f"{self.name.course_name} - {', '.join(formatted_days_and_times)}"
+        # formatted_days_and_times = [
+        #     f"{day_and_time.get('day')} at {day_and_time.get('time').strftime('%I:%M %p')}"
+        #     for day_and_time in self.class_days_and_times
+        # ]
+        # return f"{self.name.course_name} - {', '.join(formatted_days_and_times)}"
+        return f"{self.name.course_name} - {', '.join(self.class_days_and_times)}"
     
 
 
@@ -62,11 +54,14 @@ class CourseStudent(models.Model) :
         ('deleted', 'Deleted'),
     )
     student = models.ForeignKey(Student, on_delete=models.PROTECT)
-    course = models.ForeignKey(ApprovedCourse, on_delete=models.PROTECT)
+    course = models.ForeignKey(TermCourse, on_delete=models.PROTECT)
+    # course = models.ForeignKey(ApprovedCourse, on_delete=models.PROTECT)
     course_status = models.CharField(max_length=10, choices=COURSE_STATUS_CHOICES)
     student_score = models.FloatField(max_length=20, null=True, blank=True)
-    term_taken = models.ForeignKey('Term', on_delete=models.PROTECT)
+    term_taken = models.ForeignKey('Term', on_delete=models.PROTECT) # should be deleted !!!!!!
     
+    def __str__(self) :
+        return f"{self.student.username} - {self.course.name.course_name}"
     
     
 class RegistrationRequest(models.Model) :

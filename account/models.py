@@ -24,22 +24,39 @@ class Professor(User) :
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
     
+    def save(self, *args, **kwargs):
+        self.set_password(self.password)
+        super().save(*args, **kwargs)
+    
+    
     
     
 class ITManager(User) :
+    class Meta :
+        verbose_name_plural = 'ITManager'
+    
     itmanager_number = models.CharField(max_length=10, unique=True)
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
 
+    def save(self, *args, **kwargs):
+        self.set_password(self.password)
+        super().save(*args, **kwargs)
 
 
 class EducationalAssistant(User) :
+    class Meta :
+        verbose_name_plural = 'EducationalAssistant'
+    
     educational_assistant_number = models.CharField(max_length=10, unique=True)
     faculty = models.ForeignKey(Faculty, on_delete=models.PROTECT)
     major = models.ManyToManyField(Major)
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
 
+    def save(self, *args, **kwargs):
+        self.set_password(self.password)
+        super().save(*args, **kwargs)
 
 
 class Student(User) :
@@ -58,12 +75,16 @@ class Student(User) :
     intrance_term = models.ForeignKey("term.Term", on_delete=models.PROTECT)
     faculty = models.ForeignKey(Faculty, on_delete=models.PROTECT)
     major = models.ForeignKey(Major, on_delete=models.PROTECT)
-    courses = models.ManyToManyField(ApprovedCourse, through='term.CourseStudent', blank=True, related_name='enrolled_students')
+    courses = models.ManyToManyField('term.TermCourse', through='term.CourseStudent', related_name='enrolled_students')
+    # courses = models.ManyToManyField(ApprovedCourse, through='term.CourseStudent', related_name='enrolled_students')
     years = models.PositiveIntegerField(default=0) # should be updated based on student requests
     supervisor = models.ForeignKey(Professor, on_delete=models.PROTECT) 
     militery_service_status = models.CharField(max_length=20, choices=MILITERY_SERVICE_STATUS_CHOICES)
-
     
+    def save(self, *args, **kwargs):
+        self.set_password(self.password)
+        super().save(*args, **kwargs)
+        
     @property   
     def passed_courses(self) :
         return self.courses.filter(coursestudent__course_status='passed')
@@ -106,6 +127,7 @@ class Student(User) :
         else :
             return 0.0
 
+    
 
     # @property   
     # def years(self) :
@@ -133,7 +155,7 @@ class Student(User) :
     
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
-    
+
     
 
         

@@ -62,3 +62,6 @@ class ApprovedCourse(models.Model):
 
     units = models.IntegerField()
     course_type = models.CharField(max_length=100, choices=COURSE_TYPE_CHOICES)
+    
+    def __str__(self):
+        return self.course_name
