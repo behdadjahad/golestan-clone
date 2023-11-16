@@ -69,12 +69,13 @@ class CourseSelectionCheckSerializer(serializers.Serializer) :
         ('add', 'Add'),
         ('delete', 'Delete'),
     )
-    course = serializers.PrimaryKeyRelatedField(queryset=TermCourse.objects.all())
+    course = serializers.PrimaryKeyRelatedField(many=True, queryset=TermCourse.objects.all())
     option = serializers.ChoiceField(choices=OPTION_CHOICES)
     
     def validate(self, attrs) :
         student = Student.objects.get(pk=self.context['pk'])
-        course = attrs['course']
+        course = attrs['course'][0]
+        
         if attrs['option'] == 'add' :
             # first validation
             precourses = course.name.pre_requisites.all()
@@ -85,8 +86,18 @@ class CourseSelectionCheckSerializer(serializers.Serializer) :
                     raise serializers.ValidationError(f"You haven't passed { course } course.")
                 
             # second validation
+            repeated = course in RegistrationRequest.objects.filter(term=Term.objects.all().last(), student=student).first().courses.all()
+            passed = course.coursestudent_set.filter(student=student, course_status='passed').exists()
+            if repeated or passed :
+                raise serializers.ValidationError(f"You have already registered { course } course.") 
             
-
+            # fifth validation
+            
+            stu_faculty = student.faculty # it can be editted !!!!
+            course_faculty = course.name.faculty
+            if stu_faculty != course_faculty :
+                raise serializers.ValidationError(f"Course { course } is not offered by your faculty.")
+        
             
             
         return attrs

@@ -6,7 +6,7 @@ from term.serializers import TermCourseSerializer
 from term.filters import TermCourseFilter
 from term.permissions import IsITManagerOrEducationalAssistantWithSameFaculty, IsSameStudent
 from rest_framework.response import Response
-from rest_framework import status, generics, views
+from rest_framework import status, generics, views, serializers
 from rest_framework.exceptions import PermissionDenied
 
 from term.serializers import CourseSelectionSerializer, CourseSelectionCheckSerializer
@@ -48,6 +48,9 @@ class CourseSelectionCreationFormAPIView(generics.CreateAPIView) :
         term = Term.objects.all().last()
         if RegistrationRequest.objects.filter(term=term, student=student).exists() :
             raise PermissionDenied("You have already registered for this term.")
+        elif student.years == 10 : # seventh validation
+            raise PermissionDenied("You are not allowed to register for this term. Your year is full.")
+        
         return super().post(request, *args, **kwargs)
     
     
@@ -63,7 +66,6 @@ class CourseSelectionListAPIView(generics.ListAPIView) :
         term = Term.objects.all().last()
         return RegistrationRequest.objects.filter(term=term, student=student)
     
-    
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
         serializer = self.get_serializer(queryset, many=True)
@@ -73,12 +75,67 @@ class CourseSelectionListAPIView(generics.ListAPIView) :
     
     
 class CourseSelectionCheckAPIView(views.APIView) :
+    permission_classes = [IsAuthenticated, IsSameStudent]
     
     def post(self, request, *args, **kwargs):
+        student=Student.objects.get(id=self.kwargs.get('pk'))
+        term=Term.objects.all().last()
         
-        if not RegistrationRequest.objects.filter(term=Term.objects.all().last(), student=Student.objects.get(id=self.kwargs.get('pk'))).exists() :
+        if not RegistrationRequest.objects.filter(term=term, student=student).exists() :
             raise PermissionDenied("You are ubable to access course selection. Invalid datetime range.")
         
-        serializer = CourseSelectionCheckSerializer(data=request.data, context={'pk': self.kwargs.get('pk')})
-        serializer.is_valid(raise_exception=True)
-        return Response(serializer.data)
+        # serializer = CourseSelectionCheckSerializer(data=request.data, context={'pk': self.kwargs.get('pk')})
+        # serializer.is_valid(raise_exception=True)
+        
+        # counting units of selected courses in the database
+        units = 0
+        for course in RegistrationRequest.objects.filter(term=term, student=student).first().courses.all() : 
+            units += course.name.units
+            
+        if student.intrance_term == term :  # term avali
+            if units < 20 :
+                for pk in request.data['course'] : # counting units of selected courses in the request
+                    data =  {'course' : [pk] ,'option': request.data['option']}
+                    serializer = CourseSelectionCheckSerializer(data=data, context={'pk': self.kwargs.get('pk')})
+                    serializer.is_valid(raise_exception=True)
+                    termcourse = TermCourse.objects.get(id=pk)
+                    units += termcourse.name.units
+                    if units > 20 :
+                        raise serializers.ValidationError("You can not select more than 20 units.")
+                return Response(serializer.data)
+                
+            raise serializers.ValidationError("You can not select more than 20 units.")
+                    
+        else :
+            secondlast_term = Term.objects.all().reverse()[1]
+            if student.term_score(secondlast_term) >= 17 :
+                if units < 24 :
+                    for pk in request.data['course'] : # counting units of selected courses in the request
+                        data =  {'course' : [pk] ,'option': request.data['option']}
+                        serializer = CourseSelectionCheckSerializer(data=data, context={'pk': self.kwargs.get('pk')})
+                        serializer.is_valid(raise_exception=True)
+                        termcourse = TermCourse.objects.get(id=pk)
+                        units += termcourse.name.units
+                        if units > 24 :
+                            raise serializers.ValidationError("You can not select more than 24 units.")
+                    return Response(serializer.data)
+                    
+                raise serializers.ValidationError("You can not select more than 24 units.")
+            
+            else :
+                if units < 20 :
+                    for pk in request.data['course'] : # counting units of selected courses in the request
+                        data =  {'course' : [pk] ,'option': request.data['option']}
+                        serializer = CourseSelectionCheckSerializer(data=data, context={'pk': self.kwargs.get('pk')})
+                        serializer.is_valid(raise_exception=True)
+                        termcourse = TermCourse.objects.get(id=pk)
+                        units += termcourse.name.units
+                        if units > 20 :
+                            raise serializers.ValidationError("You can not select more than 20 units.")
+                    return Response(serializer.data)
+                    
+                raise serializers.ValidationError("You can not select more than 20 units.")
+        
+        
+        
+    
