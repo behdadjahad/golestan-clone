@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from term.models import TermCourse, Term
+from term.models import TermCourse, Term, RegistrationRequest
+from account.models import Student
 from datetime import datetime, date
 
 class TermCourseSerializer(serializers.ModelSerializer) :
@@ -38,6 +39,56 @@ class TermCourseSerializer(serializers.ModelSerializer) :
         
         
         return attrs
+    
+    
+class CourseSelectionSerializer(serializers.ModelSerializer) :
+    class Meta :
+        model = RegistrationRequest
+        fields = [
+            "term",
+            "student",
+            "courses",
+            "confirmation_status",
+        ]
 
-        
+    def validate(self, attrs):
+        term = attrs['term']
+        start = term.unit_selection_start_time
+        end = term.unit_selection_end_time
+        now = datetime.now()
+        now = datetime(now.year, now.month, now.day, now.hour, now.minute)
+        start = datetime(start.year, start.month, start.day, start.hour, start.minute)
+        end = datetime(end.year, end.month, end.day, end.hour, end.minute)
+        if not (now < end and now > start):
+            raise serializers.ValidationError("You are ubable to access course selection. Invalid datetime range.")
+        return attrs
+
+    
+class CourseSelectionCheckSerializer(serializers.Serializer) :
+    OPTION_CHOICES = (
+        ('add', 'Add'),
+        ('delete', 'Delete'),
+    )
+    course = serializers.PrimaryKeyRelatedField(queryset=TermCourse.objects.all())
+    option = serializers.ChoiceField(choices=OPTION_CHOICES)
+    
+    def validate(self, attrs) :
+        student = Student.objects.get(pk=self.context['pk'])
+        course = attrs['course']
+        if attrs['option'] == 'add' :
+            # first validation
+            precourses = course.name.pre_requisites.all()
+            for course in precourses :
+                termcourse = course.termcourse_set.filter(term=Term.objects.all().last()).first()
+                ispassed = termcourse.coursestudent_set.filter(student=student, course_status='passed').exists()
+                if not ispassed :
+                    raise serializers.ValidationError(f"You haven't passed { course } course.")
+                
+            # second validation
+            
+
+            
+            
+        return attrs
+            
     

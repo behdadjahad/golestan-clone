@@ -16,7 +16,11 @@ class Professor(User) :
     major = models.CharField(max_length=100)
     expertise = models.CharField(max_length=100)
     degree = models.CharField(max_length=100)
-    presented_courses = models.ManyToManyField(ApprovedCourse, blank=True)
+    # presented_courses = models.ManyToManyField(ApprovedCourse.objects.filter(faculty=faculty), blank=True)
+    
+    @property   
+    def presented_courses(self) :
+        return self.termcourse_set.all()
     
     # def update_presented_courses(self, term_name) :
     #     pass

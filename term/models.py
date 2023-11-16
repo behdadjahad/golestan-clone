@@ -36,12 +36,12 @@ class TermCourse(models.Model) :
     # departmant = models.ManyToManyField(Department) # added
     
     def __str__(self):
-        # formatted_days_and_times = [
-        #     f"{day_and_time.get('day')} at {day_and_time.get('time').strftime('%I:%M %p')}"
-        #     for day_and_time in self.class_days_and_times
-        # ]
-        # return f"{self.name.course_name} - {', '.join(formatted_days_and_times)}"
-        return f"{self.name.course_name} - {', '.join(self.class_days_and_times)}"
+        formatted_days_and_times = [
+            f"{day_and_time.get('day')} at {day_and_time.get('time')}"
+            for day_and_time in self.class_days_and_times
+        ]
+        return f"{self.name.course_name} - {', '.join(formatted_days_and_times)}"
+        # return f"{self.name.course_name} - {', '.join(self.class_days_and_times)}"
     
 
 
@@ -66,13 +66,15 @@ class CourseStudent(models.Model) :
     
 class RegistrationRequest(models.Model) :
     CONFIRMATION_STATUS_CHOICES = (
+        ('not send', 'Not Send'),
         ('waiting', 'Waiting'),
         ('confirmed', 'Confirmed'),
         ('failed', 'Failed'),
     )
-    student = models.ForeignKey(Student, on_delete=models.CASCADE)
-    courses = models.ManyToManyField(TermCourse)
-    confirmation_status = models.CharField(max_length=10, choices=CONFIRMATION_STATUS_CHOICES)
+    term = models.ForeignKey(Term, on_delete=models.PROTECT, null=True, blank=True)
+    student = models.ForeignKey(Student, on_delete=models.PROTECT)
+    courses = models.ManyToManyField(TermCourse, null=True, blank=True)
+    confirmation_status = models.CharField(max_length=10, choices=CONFIRMATION_STATUS_CHOICES, default='Not Send')
     
     
 class RemovalAndExtensionRequest(models.Model) :
