@@ -13,6 +13,9 @@ from term.serializers import CourseSelectionSerializer, CourseSelectionCheckSeri
 
 from account.models import Student
 
+from datetime import datetime
+
+from django.db import transaction
 
 
 class TermCourseViewSet(ModelViewSet) :
@@ -77,6 +80,7 @@ class CourseSelectionListAPIView(generics.ListAPIView) :
 class CourseSelectionCheckAPIView(views.APIView) :
     permission_classes = [IsAuthenticated, IsSameStudent]
     
+
     def post(self, request, *args, **kwargs):
         student=Student.objects.get(id=self.kwargs.get('pk'))
         term=Term.objects.all().last()
@@ -84,13 +88,22 @@ class CourseSelectionCheckAPIView(views.APIView) :
         if not RegistrationRequest.objects.filter(term=term, student=student).exists() :
             raise PermissionDenied("You are ubable to access course selection. Invalid datetime range.")
         
-        # serializer = CourseSelectionCheckSerializer(data=request.data, context={'pk': self.kwargs.get('pk')})
-        # serializer.is_valid(raise_exception=True)
+
         
-        # counting units of selected courses in the database
-        units = 0
+        # counting units and date_time of selected courses in the database
+        units = 0 # 5th validation
+        date_and_times = {} # 6th validation
         for course in RegistrationRequest.objects.filter(term=term, student=student).first().courses.all() : 
             units += course.name.units
+            
+            for time in course.class_days_and_times :
+                day = time['day']
+                if day in date_and_times :
+                    date_and_times[day].append((time['start_time'], time['end_time']))
+                else :
+                    date_and_times[day] = [(time['start_time'], time['end_time'])]
+            
+            
             
         if student.intrance_term == term :  # term avali
             if units < 20 :
@@ -99,28 +112,67 @@ class CourseSelectionCheckAPIView(views.APIView) :
                     serializer = CourseSelectionCheckSerializer(data=data, context={'pk': self.kwargs.get('pk')})
                     serializer.is_valid(raise_exception=True)
                     termcourse = TermCourse.objects.get(id=pk)
-                    units += termcourse.name.units
-                    if units > 20 :
-                        raise serializers.ValidationError("You can not select more than 20 units.")
-                return Response(serializer.data)
-                
-            raise serializers.ValidationError("You can not select more than 20 units.")
+                    if data['option'] == 'add' :
+                        units += termcourse.name.units
+                        if units > 20 :
+                            raise serializers.ValidationError("You can not select more than 20 units.")
+                        
+                        for time in termcourse.class_days_and_times :
+                            day = time['day']
+                            start_time = datetime.strptime(time['start_time'], "%H:%M")
+                            end_time = datetime.strptime(time['end_time'], "%H:%M")
+                            if day in date_and_times :
+                                times_in_a_day = date_and_times[day]
+                                for time_ in times_in_a_day :
+                                    start = datetime.strptime(time_[0], "%H:%M")
+                                    end = datetime.strptime(time_[1], "%H:%M")
+                                    if (start_time < end and start_time > start) or (end_time > start and end_time < end) :
+                                        raise serializers.ValidationError(f"the selected { termcourse } course interferes with previous courses")
+                                date_and_times[day].append((time['start_time'], time['end_time']))
+                                
+                            else :
+                                date_and_times[day] = [(time['start_time'], time['end_time'])]
+
+            else :   
+                raise serializers.ValidationError("You can not select more than 20 units.")
+            
+            return Response({"success": True}, status=200)
+                 
                     
         else :
             secondlast_term = Term.objects.all().reverse()[1]
             if student.term_score(secondlast_term) >= 17 :
                 if units < 24 :
-                    for pk in request.data['course'] : # counting units of selected courses in the request
-                        data =  {'course' : [pk] ,'option': request.data['option']}
-                        serializer = CourseSelectionCheckSerializer(data=data, context={'pk': self.kwargs.get('pk')})
-                        serializer.is_valid(raise_exception=True)
-                        termcourse = TermCourse.objects.get(id=pk)
-                        units += termcourse.name.units
-                        if units > 24 :
-                            raise serializers.ValidationError("You can not select more than 24 units.")
-                    return Response(serializer.data)
-                    
-                raise serializers.ValidationError("You can not select more than 24 units.")
+                        for pk in request.data['course'] : # counting units of selected courses in the request
+                            data =  {'course' : [pk] ,'option': request.data['option']}
+                            serializer = CourseSelectionCheckSerializer(data=data, context={'pk': self.kwargs.get('pk')})
+                            serializer.is_valid(raise_exception=True)
+                            termcourse = TermCourse.objects.get(id=pk)
+                            if data['option'] == 'add' :
+                                units += termcourse.name.units
+                                if units > 24 :
+                                    raise serializers.ValidationError("You can not select more than 20 units.")
+                                
+                                for time in termcourse.class_days_and_times :
+                                    day = time['day']
+                                    start_time = datetime.strptime(time['start_time'], "%H:%M")
+                                    end_time = datetime.strptime(time['end_time'], "%H:%M")
+                                    if day in date_and_times :
+                                        times_in_a_day = date_and_times[day]
+                                        for time_ in times_in_a_day :
+                                            start = datetime.strptime(time_[0], "%H:%M")
+                                            end = datetime.strptime(time_[1], "%H:%M")
+                                            if (start_time < end and start_time > start) or (end_time > start and end_time < end) :
+                                                raise serializers.ValidationError(f"the selected { termcourse } course interferes with previous courses")
+                                        date_and_times[day].append((time['start_time'], time['end_time']))
+                                        
+                                    else :
+                                        date_and_times[day] = [(time['start_time'], time['end_time'])]
+   
+                else :   
+                    raise serializers.ValidationError("You can not select more than 24 units.")
+                
+                return Response({"success": True}, status=200)
             
             else :
                 if units < 20 :
@@ -129,13 +181,188 @@ class CourseSelectionCheckAPIView(views.APIView) :
                         serializer = CourseSelectionCheckSerializer(data=data, context={'pk': self.kwargs.get('pk')})
                         serializer.is_valid(raise_exception=True)
                         termcourse = TermCourse.objects.get(id=pk)
-                        units += termcourse.name.units
-                        if units > 20 :
-                            raise serializers.ValidationError("You can not select more than 20 units.")
-                    return Response(serializer.data)
-                    
-                raise serializers.ValidationError("You can not select more than 20 units.")
+                        if data['option'] == 'add' :
+                            units += termcourse.name.units
+                            if units > 20 :
+                                raise serializers.ValidationError("You can not select more than 20 units.")
+                            
+                            for time in termcourse.class_days_and_times :
+                                day = time['day']
+                                start_time = datetime.strptime(time['start_time'], "%H:%M")
+                                end_time = datetime.strptime(time['end_time'], "%H:%M")
+                                if day in date_and_times :
+                                    times_in_a_day = date_and_times[day]
+                                    for time_ in times_in_a_day :
+                                        start = datetime.strptime(time_[0], "%H:%M")
+                                        end = datetime.strptime(time_[1], "%H:%M")
+                                        if (start_time < end and start_time > start) or (end_time > start and end_time < end) :
+                                            raise serializers.ValidationError(f"the selected { termcourse } course interferes with previous courses")
+                                    date_and_times[day].append((time['start_time'], time['end_time']))
+                                    
+                                else :
+                                    date_and_times[day] = [(time['start_time'], time['end_time'])]
+                else :   
+                    raise serializers.ValidationError("You can not select more than 20 units.")
+                
+                return Response({"success": True}, status=200)
         
         
         
+        
+class CourseSelectionSubmitAPIView(views.APIView) :
+    permission_classes = [IsAuthenticated, IsSameStudent]
     
+    @transaction.atomic
+    def post(self, request, *args, **kwargs):
+        student=Student.objects.get(id=self.kwargs.get('pk'))
+        term=Term.objects.all().last()
+        registration_request = RegistrationRequest.objects.filter(term=term, student=student).first()
+        
+        if not RegistrationRequest.objects.filter(term=term, student=student).exists() :
+            raise PermissionDenied("You are ubable to access course selection. Invalid datetime range.")
+        
+        
+        # counting units and date_time of selected courses in the database
+        units = 0 # 5th validation
+        date_and_times = {} # 6th validation
+        for course in RegistrationRequest.objects.filter(term=term, student=student).first().courses.all() : 
+            units += course.name.units
+            
+            for time in course.class_days_and_times :
+                day = time['day']
+                if day in date_and_times :
+                    date_and_times[day].append((time['start_time'], time['end_time']))
+                else :
+                    date_and_times[day] = [(time['start_time'], time['end_time'])]
+            
+            
+            
+        if student.intrance_term == term :  # term avali
+            try :
+                if units < 20 :
+                    for pk in request.data['course'] : # counting units of selected courses in the request
+                        data =  {'course' : [pk] ,'option': request.data['option']}
+                        serializer = CourseSelectionCheckSerializer(data=data, context={'pk': self.kwargs.get('pk')})
+                        serializer.is_valid(raise_exception=True)
+                        termcourse = TermCourse.objects.get(id=pk)
+                        if data['option'] == 'add' :
+                            units += termcourse.name.units
+                            if units > 20 :
+                                raise serializers.ValidationError("You can not select more than 20 units.")
+                            
+                            for time in termcourse.class_days_and_times :
+                                day = time['day']
+                                start_time = datetime.strptime(time['start_time'], "%H:%M")
+                                end_time = datetime.strptime(time['end_time'], "%H:%M")
+                                if day in date_and_times :
+                                    times_in_a_day = date_and_times[day]
+                                    for time_ in times_in_a_day :
+                                        start = datetime.strptime(time_[0], "%H:%M")
+                                        end = datetime.strptime(time_[1], "%H:%M")
+                                        if (start_time < end and start_time > start) or (end_time > start and end_time < end) :
+                                            raise serializers.ValidationError(f"the selected { termcourse } course interferes with previous courses")
+                                    date_and_times[day].append((time['start_time'], time['end_time']))
+                                    
+                                else :
+                                    date_and_times[day] = [(time['start_time'], time['end_time'])]
+                 
+                            registration_request.courses.add(termcourse)
+                                
+                        elif data['option'] == 'delete' :    
+                            registration_request.courses.remove(termcourse)
+                else :   
+                    raise serializers.ValidationError("You can not select more than 20 units.")
+                
+                return Response({"success": True}, status=200)
+            
+            except Exception as e : # we can add logging logic here
+                print(e)
+                raise e
+                    
+                    
+        else :
+            secondlast_term = Term.objects.all().reverse()[1]
+            if student.term_score(secondlast_term) >= 17 :
+                try :
+                    if units < 24 :
+                        for pk in request.data['course'] : # counting units of selected courses in the request
+                            data =  {'course' : [pk] ,'option': request.data['option']}
+                            serializer = CourseSelectionCheckSerializer(data=data, context={'pk': self.kwargs.get('pk')})
+                            serializer.is_valid(raise_exception=True)
+                            termcourse = TermCourse.objects.get(id=pk)
+                            if data['option'] == 'add' :
+                                units += termcourse.name.units
+                                if units > 24 :
+                                    raise serializers.ValidationError("You can not select more than 20 units.")
+                                
+                                for time in termcourse.class_days_and_times :
+                                    day = time['day']
+                                    start_time = datetime.strptime(time['start_time'], "%H:%M")
+                                    end_time = datetime.strptime(time['end_time'], "%H:%M")
+                                    if day in date_and_times :
+                                        times_in_a_day = date_and_times[day]
+                                        for time_ in times_in_a_day :
+                                            start = datetime.strptime(time_[0], "%H:%M")
+                                            end = datetime.strptime(time_[1], "%H:%M")
+                                            if (start_time < end and start_time > start) or (end_time > start and end_time < end) :
+                                                raise serializers.ValidationError(f"the selected { termcourse } course interferes with previous courses")
+                                        date_and_times[day].append((time['start_time'], time['end_time']))
+                                        
+                                    else :
+                                        date_and_times[day] = [(time['start_time'], time['end_time'])]
+                    
+                                registration_request.courses.add(termcourse)
+                                    
+                            elif data['option'] == 'delete' :    
+                                registration_request.courses.remove(termcourse)
+                    else :   
+                        raise serializers.ValidationError("You can not select more than 24 units.")
+                    
+                    return Response({"success": True}, status=200)
+                
+                except Exception as e : # we can add logging logic here
+                    print(e)
+                    raise e
+                
+            
+            else :
+                try :
+                    if units < 20 :
+                        for pk in request.data['course'] : # counting units of selected courses in the request
+                            data =  {'course' : [pk] ,'option': request.data['option']}
+                            serializer = CourseSelectionCheckSerializer(data=data, context={'pk': self.kwargs.get('pk')})
+                            serializer.is_valid(raise_exception=True)
+                            termcourse = TermCourse.objects.get(id=pk)
+                            if data['option'] == 'add' :
+                                units += termcourse.name.units
+                                if units > 20 :
+                                    raise serializers.ValidationError("You can not select more than 20 units.")
+                                
+                                for time in termcourse.class_days_and_times :
+                                    day = time['day']
+                                    start_time = datetime.strptime(time['start_time'], "%H:%M")
+                                    end_time = datetime.strptime(time['end_time'], "%H:%M")
+                                    if day in date_and_times :
+                                        times_in_a_day = date_and_times[day]
+                                        for time_ in times_in_a_day :
+                                            start = datetime.strptime(time_[0], "%H:%M")
+                                            end = datetime.strptime(time_[1], "%H:%M")
+                                            if (start_time < end and start_time > start) or (end_time > start and end_time < end) :
+                                                raise serializers.ValidationError(f"the selected { termcourse } course interferes with previous courses")
+                                        date_and_times[day].append((time['start_time'], time['end_time']))
+                                        
+                                    else :
+                                        date_and_times[day] = [(time['start_time'], time['end_time'])]
+                    
+                                registration_request.courses.add(termcourse)
+                                    
+                            elif data['option'] == 'delete' :    
+                                registration_request.courses.remove(termcourse)
+                    else :   
+                        raise serializers.ValidationError("You can not select more than 20 units.")
+                    
+                    return Response({"success": True}, status=200)
+                
+                except Exception as e : # we can add logging logic here
+                    print(e)
+                    raise e

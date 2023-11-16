@@ -77,7 +77,7 @@ class CourseSelectionCheckSerializer(serializers.Serializer) :
         course = attrs['course'][0]
         
         if attrs['option'] == 'add' :
-            # first validation
+            # 1st validation
             precourses = course.name.pre_requisites.all()
             for course in precourses :
                 termcourse = course.termcourse_set.filter(term=Term.objects.all().last()).first()
@@ -85,20 +85,24 @@ class CourseSelectionCheckSerializer(serializers.Serializer) :
                 if not ispassed :
                     raise serializers.ValidationError(f"You haven't passed { course } course.")
                 
-            # second validation
+            # 2nd validation
             repeated = course in RegistrationRequest.objects.filter(term=Term.objects.all().last(), student=student).first().courses.all()
             passed = course.coursestudent_set.filter(student=student, course_status='passed').exists()
             if repeated or passed :
                 raise serializers.ValidationError(f"You have already registered { course } course.") 
             
-            # fifth validation
-            
+            # 8th validation
             stu_faculty = student.faculty # it can be editted !!!!
             course_faculty = course.name.faculty
             if stu_faculty != course_faculty :
                 raise serializers.ValidationError(f"Course { course } is not offered by your faculty.")
         
-            
+        elif attrs['option'] == 'delete' :
+            # 4th validation
+            registered_courses = RegistrationRequest.objects.filter(term=Term.objects.all().last(), student=student).first().courses.all()
+            for course_ in  registered_courses:
+                if course.name in course_.name.co_requisites.all() :
+                    raise serializers.ValidationError(f"The { course } course is the co-requisites of {course_} course")
             
         return attrs
             

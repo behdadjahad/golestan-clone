@@ -37,7 +37,7 @@ class TermCourse(models.Model) :
     
     def __str__(self):
         formatted_days_and_times = [
-            f"{day_and_time.get('day')} at {day_and_time.get('time')}"
+            f"{day_and_time.get('day')}  {day_and_time.get('start_time')} - {day_and_time.get('end_time')}"
             for day_and_time in self.class_days_and_times
         ]
         return f"{self.name.course_name} - {', '.join(formatted_days_and_times)}"
