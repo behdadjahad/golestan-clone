@@ -56,7 +56,7 @@ class ApprovedCourse(models.Model):
         blank=True, related_name="prerequisites",
     )
     co_requisites = models.ManyToManyField(
-        "self", symmetrical=True, null=True,
+        "self", symmetrical=False, null=True,
         blank=True, related_name="corequisites",
     )
 
