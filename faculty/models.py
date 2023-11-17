@@ -56,9 +56,12 @@ class ApprovedCourse(models.Model):
         blank=True, related_name="prerequisites",
     )
     co_requisites = models.ManyToManyField(
-        "self", symmetrical=True, null=True,
+        "self", symmetrical=False, null=True,
         blank=True, related_name="corequisites",
     )
 
     units = models.IntegerField()
     course_type = models.CharField(max_length=100, choices=COURSE_TYPE_CHOICES)
+    
+    def __str__(self):
+        return self.course_name
