@@ -79,7 +79,7 @@ class Student(User) :
     intrance_term = models.ForeignKey("term.Term", on_delete=models.PROTECT)
     faculty = models.ForeignKey(Faculty, on_delete=models.PROTECT)
     major = models.ForeignKey(Major, on_delete=models.PROTECT)
-    courses = models.ManyToManyField('term.TermCourse', through='term.CourseStudent', related_name='enrolled_students')
+    courses = models.ManyToManyField('term.CourseStudent', related_name='enrolled_students') # editted
     # courses = models.ManyToManyField(ApprovedCourse, through='term.CourseStudent', related_name='enrolled_students')
     years = models.PositiveIntegerField(default=0) # should be updated based on student requests
     supervisor = models.ForeignKey(Professor, on_delete=models.PROTECT) 
@@ -91,11 +91,11 @@ class Student(User) :
         
     @property   
     def passed_courses(self) :
-        return self.courses.filter(coursestudent__course_status='passed')
+        return self.courses.filter(course_status='passed')
     
     @property   
     def active_courses(self) :
-        return self.courses.filter(coursestudent__course_status='active') 
+        return self.courses.filter(course_status='active') 
     
     @property   
     def gpa(self) :
@@ -104,8 +104,8 @@ class Student(User) :
         totall_units = 0
         if passed_courses.exists() :
             for course in passed_courses :
-                score = course.coursestudent_set.filter(student=self).first().student_score
-                units = course.units
+                score = course.student_score
+                units = course.course.name.units
                 totall_score += (score * units)
                 totall_units += units
             if totall_units > 0 :

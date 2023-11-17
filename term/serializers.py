@@ -17,7 +17,7 @@ class TermCourseSerializer(serializers.ModelSerializer) :
             "exam_time",
             "exam_place",
             "course_professor",
-            "course_capacity",
+        "course_capacity",
             "term",
         ]
         
@@ -106,4 +106,13 @@ class CourseSelectionCheckSerializer(serializers.Serializer) :
             
         return attrs
             
-    
+
+class CourseSelectionStudentFormsSerializers(serializers.ModelSerializer) :
+    class Meta :
+        model = RegistrationRequest
+        fields = [
+            "confirmation_status",
+            "term",
+            "student",
+            "courses",   
+        ]

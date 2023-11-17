@@ -1,6 +1,6 @@
 from rest_framework.permissions import BasePermission
 
-from account.models import EducationalAssistant, ITManager, Student
+from account.models import EducationalAssistant, ITManager, Professor, Student
 
 
 class IsITManagerOrEducationalAssistantWithSameFaculty(BasePermission):
@@ -32,3 +32,14 @@ class IsSameStudent(BasePermission):
         username = request.user.username
         student = Student.objects.get(username=username)
         return obj == student 
+    
+
+class IsSameProfessor(BasePermission):
+    def has_permission(self, request, view):
+        username = request.user.username
+        return request.user.is_authenticated and Professor.objects.filter(username=username).exists()
+    
+    def has_object_permission(self, request, view, obj):
+        username = request.user.username
+        professor = Professor.objects.get(username=username)
+        return obj == professor 

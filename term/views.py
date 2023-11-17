@@ -1,19 +1,19 @@
 from rest_framework.viewsets import ModelViewSet
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from term.models import Term, TermCourse, RegistrationRequest
-from term.serializers import TermCourseSerializer
+from term.models import Term, TermCourse, RegistrationRequest, CourseStudent
+from term.serializers import CourseSelectionStudentFormsSerializers, TermCourseSerializer
 from term.filters import TermCourseFilter
-from term.permissions import IsITManagerOrEducationalAssistantWithSameFaculty, IsSameStudent
+from term.permissions import IsITManagerOrEducationalAssistantWithSameFaculty, IsSameStudent, IsSameProfessor
 from rest_framework.response import Response
 from rest_framework import status, generics, views, serializers
 from rest_framework.exceptions import PermissionDenied
 
 from term.serializers import CourseSelectionSerializer, CourseSelectionCheckSerializer
 
-from account.models import Student
+from account.models import Professor, Student
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from django.db import transaction
 
@@ -39,6 +39,7 @@ class TermCourseViewSet(ModelViewSet) :
         self.check_object_permissions(self.request, termcourse.name)
         return termcourse
     
+
     
 class CourseSelectionCreationFormAPIView(generics.CreateAPIView) :
     serializer_class = CourseSelectionSerializer
@@ -72,8 +73,9 @@ class CourseSelectionListAPIView(generics.ListAPIView) :
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
         serializer = self.get_serializer(queryset, many=True)
+        # serializer.is_valid(raise_exception=True) # check it later !!!!!!!
         data = serializer.data[0]
-        response_data = {'status': 'success', 'courses': data['courses']}
+        response_data = {'status': data['confirmation_status'], 'courses': data['courses']}
         return Response(response_data)
     
     
@@ -84,15 +86,18 @@ class CourseSelectionCheckAPIView(views.APIView) :
     def post(self, request, *args, **kwargs):
         student=Student.objects.get(id=self.kwargs.get('pk'))
         term=Term.objects.all().last()
+        registration_request = RegistrationRequest.objects.filter(term=term, student=student).first()
         
         if not RegistrationRequest.objects.filter(term=term, student=student).exists() :
             raise PermissionDenied("You are ubable to access course selection. Invalid datetime range.")
-        
+        elif registration_request.confirmation_status != 'not send' :
+            raise PermissionDenied("You have already sended your registration request. Please wait for confirmation.")
 
         
         # counting units and date_time of selected courses in the database
         units = 0 # 5th validation
         date_and_times = {} # 6th validation
+        exams_time = []
         for course in RegistrationRequest.objects.filter(term=term, student=student).first().courses.all() : 
             units += course.name.units
             
@@ -102,7 +107,10 @@ class CourseSelectionCheckAPIView(views.APIView) :
                     date_and_times[day].append((time['start_time'], time['end_time']))
                 else :
                     date_and_times[day] = [(time['start_time'], time['end_time'])]
-            
+                    
+            start = datetime(course.exam_time.year, course.exam_time.month, course.exam_time.day, course.exam_time.hour, course.exam_time.minute)
+            end = start + timedelta(hours=2)
+            exams_time.append((start, end))
             
             
         if student.intrance_term == term :  # term avali
@@ -132,10 +140,22 @@ class CourseSelectionCheckAPIView(views.APIView) :
                                 
                             else :
                                 date_and_times[day] = [(time['start_time'], time['end_time'])]
+                            
+                        
+                        start_added_exam_time = datetime(termcourse.exam_time.year, termcourse.exam_time.month, termcourse.exam_time.day, termcourse.exam_time.hour, termcourse.exam_time.minute)
+                        end_added_exam_time = start_added_exam_time + timedelta(hours=2)
+                        for exam_time in exams_time :
+                            start = exam_time[0]
+                            end = exam_time[1]
+                            if (start_added_exam_time < end and start_added_exam_time > start) or (end_added_exam_time > start and end_added_exam_time < end) :
+                                raise serializers.ValidationError(f"the selected { termcourse } course's exam time interferes with previous courses")
+                        exams_time.append((start_added_exam_time, end_added_exam_time))
+                            
 
             else :   
                 raise serializers.ValidationError("You can not select more than 20 units.")
             
+            print(exams_time)
             return Response({"success": True}, status=200)
                  
                     
@@ -168,6 +188,15 @@ class CourseSelectionCheckAPIView(views.APIView) :
                                         
                                     else :
                                         date_and_times[day] = [(time['start_time'], time['end_time'])]
+                                
+                                start_added_exam_time = datetime(termcourse.exam_time.year, termcourse.exam_time.month, termcourse.exam_time.day, termcourse.exam_time.hour, termcourse.exam_time.minute)
+                                end_added_exam_time = start_added_exam_time + timedelta(hours=2)
+                                for exam_time in exams_time :
+                                    start = exam_time[0]
+                                    end = exam_time[1]
+                                    if (start_added_exam_time < end and start_added_exam_time > start) or (end_added_exam_time > start and end_added_exam_time < end) :
+                                        raise serializers.ValidationError(f"the selected { termcourse } course's exam time interferes with previous courses")
+                                exams_time.append((start_added_exam_time, end_added_exam_time))
    
                 else :   
                     raise serializers.ValidationError("You can not select more than 24 units.")
@@ -201,6 +230,16 @@ class CourseSelectionCheckAPIView(views.APIView) :
                                     
                                 else :
                                     date_and_times[day] = [(time['start_time'], time['end_time'])]
+                                    
+                            start_added_exam_time = datetime(termcourse.exam_time.year, termcourse.exam_time.month, termcourse.exam_time.day, termcourse.exam_time.hour, termcourse.exam_time.minute)
+                            end_added_exam_time = start_added_exam_time + timedelta(hours=2)
+                            for exam_time in exams_time :
+                                start = exam_time[0]
+                                end = exam_time[1]
+                                if (start_added_exam_time < end and start_added_exam_time > start) or (end_added_exam_time > start and end_added_exam_time < end) :
+                                    raise serializers.ValidationError(f"the selected { termcourse } course's exam time interferes with previous courses")
+                            exams_time.append((start_added_exam_time, end_added_exam_time))
+                            
                 else :   
                     raise serializers.ValidationError("You can not select more than 20 units.")
                 
@@ -220,11 +259,14 @@ class CourseSelectionSubmitAPIView(views.APIView) :
         
         if not RegistrationRequest.objects.filter(term=term, student=student).exists() :
             raise PermissionDenied("You are ubable to access course selection. Invalid datetime range.")
+        elif registration_request.confirmation_status != 'not send' :
+            raise PermissionDenied("You have already sended your registration request. Please wait for confirmation.")
         
         
         # counting units and date_time of selected courses in the database
         units = 0 # 5th validation
         date_and_times = {} # 6th validation
+        exams_time = []
         for course in RegistrationRequest.objects.filter(term=term, student=student).first().courses.all() : 
             units += course.name.units
             
@@ -234,6 +276,10 @@ class CourseSelectionSubmitAPIView(views.APIView) :
                     date_and_times[day].append((time['start_time'], time['end_time']))
                 else :
                     date_and_times[day] = [(time['start_time'], time['end_time'])]
+                    
+            start = datetime(course.exam_time.year, course.exam_time.month, course.exam_time.day, course.exam_time.hour, course.exam_time.minute)
+            end = start + timedelta(hours=2)
+            exams_time.append((start, end))
             
             
             
@@ -265,11 +311,22 @@ class CourseSelectionSubmitAPIView(views.APIView) :
                                     
                                 else :
                                     date_and_times[day] = [(time['start_time'], time['end_time'])]
+                                    
+                            start_added_exam_time = datetime(termcourse.exam_time.year, termcourse.exam_time.month, termcourse.exam_time.day, termcourse.exam_time.hour, termcourse.exam_time.minute)
+                            end_added_exam_time = start_added_exam_time + timedelta(hours=2)
+                            for exam_time in exams_time :
+                                start = exam_time[0]
+                                end = exam_time[1]
+                                if (start_added_exam_time < end and start_added_exam_time > start) or (end_added_exam_time > start and end_added_exam_time < end) :
+                                    raise serializers.ValidationError(f"the selected { termcourse } course's exam time interferes with previous courses")
+                            exams_time.append((start_added_exam_time, end_added_exam_time))
+                                
                  
                             registration_request.courses.add(termcourse)
                                 
                         elif data['option'] == 'delete' :    
                             registration_request.courses.remove(termcourse)
+                            
                 else :   
                     raise serializers.ValidationError("You can not select more than 20 units.")
                 
@@ -310,6 +367,16 @@ class CourseSelectionSubmitAPIView(views.APIView) :
                                         
                                     else :
                                         date_and_times[day] = [(time['start_time'], time['end_time'])]
+                                        
+                                start_added_exam_time = datetime(termcourse.exam_time.year, termcourse.exam_time.month, termcourse.exam_time.day, termcourse.exam_time.hour, termcourse.exam_time.minute)
+                                end_added_exam_time = start_added_exam_time + timedelta(hours=2)
+                                for exam_time in exams_time :
+                                    start = exam_time[0]
+                                    end = exam_time[1]
+                                    if (start_added_exam_time < end and start_added_exam_time > start) or (end_added_exam_time > start and end_added_exam_time < end) :
+                                        raise serializers.ValidationError(f"the selected { termcourse } course's exam time interferes with previous courses")
+                                exams_time.append((start_added_exam_time, end_added_exam_time))        
+                                
                     
                                 registration_request.courses.add(termcourse)
                                     
@@ -353,6 +420,15 @@ class CourseSelectionSubmitAPIView(views.APIView) :
                                         
                                     else :
                                         date_and_times[day] = [(time['start_time'], time['end_time'])]
+                                        
+                                start_added_exam_time = datetime(termcourse.exam_time.year, termcourse.exam_time.month, termcourse.exam_time.day, termcourse.exam_time.hour, termcourse.exam_time.minute)
+                                end_added_exam_time = start_added_exam_time + timedelta(hours=2)
+                                for exam_time in exams_time :
+                                    start = exam_time[0]
+                                    end = exam_time[1]
+                                    if (start_added_exam_time < end and start_added_exam_time > start) or (end_added_exam_time > start and end_added_exam_time < end) :
+                                        raise serializers.ValidationError(f"the selected { termcourse } course's exam time interferes with previous courses")
+                                exams_time.append((start_added_exam_time, end_added_exam_time))
                     
                                 registration_request.courses.add(termcourse)
                                     
@@ -366,3 +442,83 @@ class CourseSelectionSubmitAPIView(views.APIView) :
                 except Exception as e : # we can add logging logic here
                     print(e)
                     raise e
+                
+class CourseSelectionSendAPIView(views.APIView) :
+    permission_classes = [IsAuthenticated, IsSameStudent]
+    
+    def post(self, request, *args, **kwargs) :
+        student=Student.objects.get(id=self.kwargs.get('pk'))
+        term=Term.objects.all().last()
+        registeration_request = RegistrationRequest.objects.filter(term=term, student=student).first()
+        if registeration_request.confirmation_status == 'not send' :
+            registeration_request.confirmation_status = 'waiting'
+            registeration_request.save()
+        elif registeration_request.confirmation_status == 'waiting' :
+            raise PermissionDenied(f"Your are unable to change the confirmation status to waiting twice")
+        else :
+            raise PermissionDenied(f"Your are unable to change the {registeration_request.confirmation_status} confirmation status to waiting")
+        
+        return Response({"success": True}, status=200)
+    
+
+class CourseSelectionStudentFormsAPIView(views.APIView) :
+    permission_classes = [IsAuthenticated, IsSameProfessor]
+    
+    def get(self, request, *args, **kwargs) :
+        pk = self.kwargs.get('pk')
+        professor = Professor.objects.get(id=pk)
+        self.check_object_permissions(self.request, professor)
+        students = professor.student_set.all()
+        registeration_requests = []
+        for student in students :
+            registeration_request = RegistrationRequest.objects.filter(term=Term.objects.all().last(), student=student).first()
+            serializer = CourseSelectionStudentFormsSerializers(registeration_request)
+            registeration_requests.append(serializer.data)
+
+        return Response({"success": True, "registeration_requests" : registeration_requests }, status=200)
+
+
+class CourseSelectionStudentFormsDetailAPIView(views.APIView) :
+    permission_classes = [IsAuthenticated, IsSameProfessor]
+    
+    def get(self, request, *args, **kwargs) :
+        pk = self.kwargs.get('pk')
+        s_pk = self.kwargs.get('s_pk')
+        student = Student.objects.get(id=s_pk)
+        professor = Professor.objects.get(id=pk)
+        self.check_object_permissions(self.request, professor)
+        students = professor.student_set.all()
+        if student in students :
+            registeration_request = RegistrationRequest.objects.filter(term=Term.objects.all().last(), student=student).first()
+            serializer = CourseSelectionStudentFormsSerializers(registeration_request)
+            return Response({"success": True, "registeration_request" : serializer.data }, status=200)
+        else :
+            raise PermissionDenied("You are not allowed to see this student's registeration request.")
+        
+    def post(self, request, *args, **kwargs) :
+        pk = self.kwargs.get('pk')
+        s_pk = self.kwargs.get('s_pk')
+        student = Student.objects.get(id=s_pk)
+        professor = Professor.objects.get(id=pk)
+        self.check_object_permissions(self.request, professor)
+        students = professor.student_set.all()
+        
+        if student in students :
+            registeration_request = RegistrationRequest.objects.filter(term=Term.objects.all().last(), student=student).first()
+            
+            if request.data['status'] == 'confirmed' : # we should use celery here to send an email to the student
+                registeration_request.confirmation_status = 'confirmed'
+                registeration_request.save()
+                for course in registeration_request.courses.all() :
+                    coursestudent = CourseStudent.objects.create(student=student, course=course, course_status='active', term_taken=Term.objects.all().last())
+                    student.courses.add(coursestudent)
+                return Response({"success": True, "detail": "confirmed seccessfully"}, status=200)
+
+            elif request.data['status'] == 'failed' :
+                registeration_request.confirmation_status = 'not send'
+                registeration_request.save()
+                return Response({"success": True, "detail": "failed seccessfully"}, status=200)
+
+        
+        else :
+            raise PermissionDenied("You are not allowed to see this student's registeration request.")
