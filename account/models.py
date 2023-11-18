@@ -79,7 +79,7 @@ class Student(User) :
     intrance_term = models.ForeignKey("term.Term", on_delete=models.PROTECT)
     faculty = models.ForeignKey(Faculty, on_delete=models.PROTECT)
     major = models.ForeignKey(Major, on_delete=models.PROTECT)
-    courses = models.ManyToManyField('term.CourseStudent', related_name='enrolled_students') # editted
+    courses = models.ManyToManyField('term.CourseStudent', related_name='enrolled_students', null=True, blank=True) # editted
     # courses = models.ManyToManyField(ApprovedCourse, through='term.CourseStudent', related_name='enrolled_students')
     years = models.PositiveIntegerField(default=0) # should be updated based on student requests
     supervisor = models.ForeignKey(Professor, on_delete=models.PROTECT) 
