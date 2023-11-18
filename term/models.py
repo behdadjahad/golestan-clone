@@ -71,7 +71,7 @@ class RegistrationRequest(models.Model) :
         ('confirmed', 'Confirmed'),
         ('failed', 'Failed'),
     )
-    term = models.ForeignKey(Term, on_delete=models.PROTECT, null=True, blank=True)
+    term = models.ForeignKey(Term, on_delete=models.PROTECT)
     student = models.ForeignKey(Student, on_delete=models.PROTECT)
     courses = models.ManyToManyField(TermCourse, null=True, blank=True)
     confirmation_status = models.CharField(max_length=10, choices=CONFIRMATION_STATUS_CHOICES, default='Not Send')
