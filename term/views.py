@@ -57,6 +57,14 @@ class CourseSelectionCreationFormAPIView(generics.CreateAPIView) :
         
         return super().post(request, *args, **kwargs)
     
+    def create(self, request, *args, **kwargs):
+        data = {"student": self.kwargs.get('pk'), "term": Term.objects.all().last().id}
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+    
     
 class CourseSelectionListAPIView(generics.ListAPIView) :
     # CourseSelectionListSerializer
@@ -73,10 +81,12 @@ class CourseSelectionListAPIView(generics.ListAPIView) :
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
         serializer = self.get_serializer(queryset, many=True)
-        # serializer.is_valid(raise_exception=True) # check it later !!!!!!!
-        data = serializer.data[0]
-        response_data = {'status': data['confirmation_status'], 'courses': data['courses']}
-        return Response(response_data)
+        if len(serializer.data) == 0 :
+            raise PermissionDenied("You have not registered for this term.")
+        else :
+            data = serializer.data[0]
+            response_data = {'status': data['confirmation_status'], 'courses': data['courses']}
+            return Response(response_data)
     
     
 class CourseSelectionCheckAPIView(views.APIView) :
@@ -85,6 +95,7 @@ class CourseSelectionCheckAPIView(views.APIView) :
 
     def post(self, request, *args, **kwargs):
         student=Student.objects.get(id=self.kwargs.get('pk'))
+        self.check_object_permissions(self.request, student)
         term=Term.objects.all().last()
         registration_request = RegistrationRequest.objects.filter(term=term, student=student).first()
         
@@ -155,7 +166,6 @@ class CourseSelectionCheckAPIView(views.APIView) :
             else :   
                 raise serializers.ValidationError("You can not select more than 20 units.")
             
-            print(exams_time)
             return Response({"success": True}, status=200)
                  
                     
@@ -254,6 +264,7 @@ class CourseSelectionSubmitAPIView(views.APIView) :
     @transaction.atomic
     def post(self, request, *args, **kwargs):
         student=Student.objects.get(id=self.kwargs.get('pk'))
+        self.check_object_permissions(self.request, student)
         term=Term.objects.all().last()
         registration_request = RegistrationRequest.objects.filter(term=term, student=student).first()
         
@@ -448,6 +459,7 @@ class CourseSelectionSendAPIView(views.APIView) :
     
     def post(self, request, *args, **kwargs) :
         student=Student.objects.get(id=self.kwargs.get('pk'))
+        self.check_object_permissions(self.request, student)
         term=Term.objects.all().last()
         registeration_request = RegistrationRequest.objects.filter(term=term, student=student).first()
         if registeration_request.confirmation_status == 'not send' :
@@ -522,3 +534,5 @@ class CourseSelectionStudentFormsDetailAPIView(views.APIView) :
         
         else :
             raise PermissionDenied("You are not allowed to see this student's registeration request.")
+        
+        
