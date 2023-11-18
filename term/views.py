@@ -1,15 +1,15 @@
 from rest_framework.viewsets import ModelViewSet
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from term.models import Term, TermCourse, RegistrationRequest, CourseStudent
-from term.serializers import CourseSelectionStudentFormsSerializers, TermCourseSerializer
+from term.models import Term, TermCourse, RegistrationRequest, CourseStudent, RemovalAndExtensionRequest
+from term.serializers import TermCourseSerializer
 from term.filters import TermCourseFilter
 from term.permissions import IsITManagerOrEducationalAssistantWithSameFaculty, IsSameStudent, IsSameProfessor
 from rest_framework.response import Response
 from rest_framework import status, generics, views, serializers
 from rest_framework.exceptions import PermissionDenied
 
-from term.serializers import CourseSelectionSerializer, CourseSelectionCheckSerializer
+from term.serializers import CourseSelectionSerializer, CourseSelectionCheckSerializer, CourseSubstitutionSerializer
 
 from account.models import Professor, Student
 
@@ -57,6 +57,14 @@ class CourseSelectionCreationFormAPIView(generics.CreateAPIView) :
         
         return super().post(request, *args, **kwargs)
     
+    def create(self, request, *args, **kwargs):
+        data = {"student": self.kwargs.get('pk'), "term": Term.objects.all().last().id}
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+    
     
 class CourseSelectionListAPIView(generics.ListAPIView) :
     # CourseSelectionListSerializer
@@ -73,10 +81,12 @@ class CourseSelectionListAPIView(generics.ListAPIView) :
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
         serializer = self.get_serializer(queryset, many=True)
-        # serializer.is_valid(raise_exception=True) # check it later !!!!!!!
-        data = serializer.data[0]
-        response_data = {'status': data['confirmation_status'], 'courses': data['courses']}
-        return Response(response_data)
+        if len(serializer.data) == 0 :
+            raise PermissionDenied("You have not registered for this term.")
+        else :
+            data = serializer.data[0]
+            response_data = {'status': data['confirmation_status'], 'courses': data['courses']}
+            return Response(response_data)
     
     
 class CourseSelectionCheckAPIView(views.APIView) :
@@ -85,14 +95,17 @@ class CourseSelectionCheckAPIView(views.APIView) :
 
     def post(self, request, *args, **kwargs):
         student=Student.objects.get(id=self.kwargs.get('pk'))
+        self.check_object_permissions(self.request, student)
         term=Term.objects.all().last()
         registration_request = RegistrationRequest.objects.filter(term=term, student=student).first()
         
         if not RegistrationRequest.objects.filter(term=term, student=student).exists() :
-            raise PermissionDenied("You are ubable to access course selection. Invalid datetime range.")
-        elif registration_request.confirmation_status != 'not send' :
+            raise PermissionDenied("You have not registered for this term.")
+        elif registration_request.confirmation_status == 'confirmed' :
+            raise PermissionDenied("Your registration request confirmed. You can not change it again.") 
+        elif registration_request.confirmation_status != 'Not Send' :
             raise PermissionDenied("You have already sended your registration request. Please wait for confirmation.")
-
+        
         
         # counting units and date_time of selected courses in the database
         units = 0 # 5th validation
@@ -155,7 +168,6 @@ class CourseSelectionCheckAPIView(views.APIView) :
             else :   
                 raise serializers.ValidationError("You can not select more than 20 units.")
             
-            print(exams_time)
             return Response({"success": True}, status=200)
                  
                     
@@ -254,12 +266,15 @@ class CourseSelectionSubmitAPIView(views.APIView) :
     @transaction.atomic
     def post(self, request, *args, **kwargs):
         student=Student.objects.get(id=self.kwargs.get('pk'))
+        self.check_object_permissions(self.request, student)
         term=Term.objects.all().last()
         registration_request = RegistrationRequest.objects.filter(term=term, student=student).first()
         
         if not RegistrationRequest.objects.filter(term=term, student=student).exists() :
-            raise PermissionDenied("You are ubable to access course selection. Invalid datetime range.")
-        elif registration_request.confirmation_status != 'not send' :
+            raise PermissionDenied("You have not registered for this term.")
+        elif registration_request.confirmation_status == 'confirmed' :
+            raise PermissionDenied("Your registration request confirmed. You can not change it again.") 
+        elif registration_request.confirmation_status != 'Not Send' :
             raise PermissionDenied("You have already sended your registration request. Please wait for confirmation.")
         
         
@@ -448,12 +463,13 @@ class CourseSelectionSendAPIView(views.APIView) :
     
     def post(self, request, *args, **kwargs) :
         student=Student.objects.get(id=self.kwargs.get('pk'))
+        self.check_object_permissions(self.request, student)
         term=Term.objects.all().last()
         registeration_request = RegistrationRequest.objects.filter(term=term, student=student).first()
-        if registeration_request.confirmation_status == 'not send' :
+        if registeration_request.confirmation_status == 'Not Send' :
             registeration_request.confirmation_status = 'waiting'
             registeration_request.save()
-        elif registeration_request.confirmation_status == 'waiting' :
+        elif registeration_request.confirmation_status == 'Waiting' :
             raise PermissionDenied(f"Your are unable to change the confirmation status to waiting twice")
         else :
             raise PermissionDenied(f"Your are unable to change the {registeration_request.confirmation_status} confirmation status to waiting")
@@ -472,7 +488,7 @@ class CourseSelectionStudentFormsAPIView(views.APIView) :
         registeration_requests = []
         for student in students :
             registeration_request = RegistrationRequest.objects.filter(term=Term.objects.all().last(), student=student).first()
-            serializer = CourseSelectionStudentFormsSerializers(registeration_request)
+            serializer = CourseSelectionSerializer(registeration_request)
             registeration_requests.append(serializer.data)
 
         return Response({"success": True, "registeration_requests" : registeration_requests }, status=200)
@@ -490,7 +506,7 @@ class CourseSelectionStudentFormsDetailAPIView(views.APIView) :
         students = professor.student_set.all()
         if student in students :
             registeration_request = RegistrationRequest.objects.filter(term=Term.objects.all().last(), student=student).first()
-            serializer = CourseSelectionStudentFormsSerializers(registeration_request)
+            serializer = CourseSelectionSerializer(registeration_request)
             return Response({"success": True, "registeration_request" : serializer.data }, status=200)
         else :
             raise PermissionDenied("You are not allowed to see this student's registeration request.")
@@ -522,3 +538,53 @@ class CourseSelectionStudentFormsDetailAPIView(views.APIView) :
         
         else :
             raise PermissionDenied("You are not allowed to see this student's registeration request.")
+        
+
+class CourseSubstitutionCreationFormAPIView(generics.CreateAPIView) :
+    serializer_class = CourseSubstitutionSerializer
+    permission_classes = [IsAuthenticated, IsSameStudent]
+    
+    def post(self, request, *args, **kwargs): # checking creation again
+        student_id = self.kwargs.get('pk')
+        student = Student.objects.get(id=student_id)
+        self.check_object_permissions(self.request, student)
+        term = Term.objects.all().last()
+        if RemovalAndExtensionRequest.objects.filter(term=term, student=student).exists() :
+            raise PermissionDenied("You have already registered for this course substitution.")
+        elif not RegistrationRequest.objects.filter(term=term, student=student).exists() :
+            raise PermissionDenied("You have not registered for this term.")
+
+        return super().post(request, *args, **kwargs)
+    
+    def create(self, request, *args, **kwargs):
+        data = {"student": self.kwargs.get('pk'), "term": Term.objects.all().last().id}
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+    
+    
+class CourseSubstitutionListAPIView(generics.ListAPIView) :
+    serializer_class = CourseSubstitutionSerializer
+    permission_classes = [IsAuthenticated, IsSameStudent]
+    
+    def get_queryset(self):
+        student_id = self.kwargs.get('pk')
+        student = Student.objects.get(id=student_id)
+        self.check_object_permissions(self.request, student)
+        term = Term.objects.all().last()
+        return RemovalAndExtensionRequest.objects.filter(term=term, student=student)
+    
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        if len(serializer.data) == 0 :
+            raise PermissionDenied("You have not registered for course substitution.")
+        else :
+            data = serializer.data[0]
+            response_data = {'status': data['confirmation_status'], 'extended_courses': data['extended_courses'], 'removed_courses': data['removed_courses']}
+            return Response(response_data)
+    
+
+        

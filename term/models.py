@@ -71,7 +71,7 @@ class RegistrationRequest(models.Model) :
         ('confirmed', 'Confirmed'),
         ('failed', 'Failed'),
     )
-    term = models.ForeignKey(Term, on_delete=models.PROTECT, null=True, blank=True)
+    term = models.ForeignKey(Term, on_delete=models.PROTECT)
     student = models.ForeignKey(Student, on_delete=models.PROTECT)
     courses = models.ManyToManyField(TermCourse, null=True, blank=True)
     confirmation_status = models.CharField(max_length=10, choices=CONFIRMATION_STATUS_CHOICES, default='Not Send')
@@ -79,14 +79,17 @@ class RegistrationRequest(models.Model) :
     
 class RemovalAndExtensionRequest(models.Model) :
     CONFIRMATION_STATUS_CHOICES = (
+        ('not send', 'Not Send'),
+        ('waiting', 'Waiting'),
         ('confirmed', 'Confirmed'),
         ('failed', 'Failed'),
     )
-    
+    term = models.ForeignKey(Term, on_delete=models.PROTECT, null=True, blank=True) # should be edited !!!!!
     student = models.ForeignKey(Student, on_delete=models.CASCADE)
-    removed_courses = models.ManyToManyField(RegistrationRequest, related_name="removed_courses")
-    extended_courses = models.ManyToManyField(TermCourse, related_name="extended_courses")
-    confirmation_status = models.CharField(max_length=10, choices=CONFIRMATION_STATUS_CHOICES)
+    removed_courses = models.ManyToManyField(RegistrationRequest, related_name="removed_courses", null=True, blank=True)
+    extended_courses = models.ManyToManyField(TermCourse, related_name="extended_courses", null=True, blank=True)
+    confirmation_status = models.CharField(max_length=10, choices=CONFIRMATION_STATUS_CHOICES, default='Not Send')
+    
     
     
 class ReconsiderationRequest(models.Model) :

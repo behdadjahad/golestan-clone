@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from term.models import TermCourse, Term, RegistrationRequest
+from term.models import TermCourse, Term, RegistrationRequest, RemovalAndExtensionRequest
 from account.models import Student
 from datetime import datetime, date
 
@@ -17,7 +17,7 @@ class TermCourseSerializer(serializers.ModelSerializer) :
             "exam_time",
             "exam_place",
             "course_professor",
-        "course_capacity",
+            "course_capacity",
             "term",
         ]
         
@@ -106,13 +106,27 @@ class CourseSelectionCheckSerializer(serializers.Serializer) :
             
         return attrs
             
+        
 
-class CourseSelectionStudentFormsSerializers(serializers.ModelSerializer) :
+class CourseSubstitutionSerializer(serializers.ModelSerializer) :
     class Meta :
-        model = RegistrationRequest
+        model = RemovalAndExtensionRequest
         fields = [
-            "confirmation_status",
             "term",
             "student",
-            "courses",   
+            "removed_courses",
+            "extended_courses",
+            "confirmation_status",
         ]
+
+    def validate(self, attrs):
+        term = attrs['term']
+        start = term.repairing_unit_selection_start_time
+        end = term.repairing_unit_selection_end_time
+        now = datetime.now()
+        now = datetime(now.year, now.month, now.day, now.hour, now.minute)
+        start = datetime(start.year, start.month, start.day, start.hour, start.minute)
+        end = datetime(end.year, end.month, end.day, end.hour, end.minute)
+        if not (now < end and now > start):
+            raise serializers.ValidationError("You are ubable to access course substitution. Invalid datetime range.")
+        return attrs
