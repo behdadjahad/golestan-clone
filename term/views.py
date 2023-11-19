@@ -40,19 +40,18 @@ class TermCourseViewSet(ModelViewSet) :
         return termcourse
     
 
-    
-class CourseSelectionCreationFormAPIView(generics.CreateAPIView) :
+class CourseSelectionCreationFormAPIView(generics.CreateAPIView):
     serializer_class = CourseSelectionSerializer
     permission_classes = [IsAuthenticated, IsSameStudent]
     
-    def post(self, request, *args, **kwargs): # checking creation again
+    def post(self, request, *args, **kwargs):# checking creation again
         student_id = self.kwargs.get('pk')
         student = Student.objects.get(id=student_id)
         self.check_object_permissions(self.request, student)
         term = Term.objects.all().last()
         if RegistrationRequest.objects.filter(term=term, student=student).exists() :
             raise PermissionDenied("You have already registered for this term.")
-        elif student.years == 10 : # seventh validation
+        elif student.years == 10:# seventh validation
             raise PermissionDenied("You are not allowed to register for this term. Your year is full.")
         
         return super().post(request, *args, **kwargs)
@@ -487,20 +486,20 @@ class CourseSelectionStudentFormsAPIView(views.APIView) :
             serializer = CourseSelectionStudentFormsSerializers(registeration_request)
             registeration_requests.append(serializer.data)
 
-        return Response({"success": True, "registeration_requests" : registeration_requests }, status=200)
+        return Response({"success": True, "registeration_requests": registeration_requests}, status=200)
 
 
 class CourseSelectionStudentFormsDetailAPIView(views.APIView) :
     permission_classes = [IsAuthenticated, IsSameProfessor]
     
-    def get(self, request, *args, **kwargs) :
+    def get(self, request, *args, **kwargs):
         pk = self.kwargs.get('pk')
         s_pk = self.kwargs.get('s_pk')
         student = Student.objects.get(id=s_pk)
         professor = Professor.objects.get(id=pk)
         self.check_object_permissions(self.request, professor)
         students = professor.student_set.all()
-        if student in students :
+        if student in students:
             registeration_request = RegistrationRequest.objects.filter(term=Term.objects.all().last(), student=student).first()
             serializer = CourseSelectionStudentFormsSerializers(registeration_request)
             return Response({"success": True, "registeration_request" : serializer.data }, status=200)

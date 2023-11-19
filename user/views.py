@@ -7,6 +7,10 @@ from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import get_user_model
 
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from .tasks import send_email_task
+
 from user.serializers import UserLoginSerializer, ChangePasswordSerializer
 
 
@@ -63,4 +67,20 @@ class ChangePasswordView(APIView):
                     return Response({'message': 'Password changed successfully.'}, status=status.HTTP_200_OK)
                 return Response({'ERROR': 'Incorrect old password.'}, status=status.HTTP_400_BAD_REQUEST)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class SendEmailView(APIView):
+    def get(self, request):
+        send_email_task.delay()
+        return Response({'detail': 'message has been sent!'}, status=200)
+
+ #    def post(self, request):
+ # #        recipient = request.data.get('recipient')
+ # # subject = request.data.get('subject')
+ # #        message = request.data.get('message')
+ #
+ #        # Call the Celery task
+ #        send_email_task.delay(recipient, subject, message)
+ #
+ #        return Response({'detail': 'Email will be sent asynchronously.'})
 
