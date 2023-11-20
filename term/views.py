@@ -129,7 +129,7 @@ class CourseSelectionCheckAPIView(views.APIView) :
         if student.intrance_term == term :  # term avali
             for pk in request.data['course'] : # counting units of selected courses in the request
                 data =  {'course' : [pk] ,'option': request.data['option']}
-                serializer = CourseSubstitutionCheckSerializer(data=data, context={'pk': self.kwargs.get('pk')})
+                serializer = CourseSelectionCheckSerializer(data=data, context={'pk': self.kwargs.get('pk')})
                 serializer.is_valid(raise_exception=True)
                 termcourse = TermCourse.objects.get(id=pk)
                 if data['option'] == 'add' :
@@ -187,7 +187,7 @@ class CourseSelectionCheckAPIView(views.APIView) :
             if student.term_score(secondlast_term) >= 17 :
                 for pk in request.data['course'] : # counting units of selected courses in the request
                     data =  {'course' : [pk] ,'option': request.data['option']}
-                    serializer = CourseSubstitutionCheckSerializer(data=data, context={'pk': self.kwargs.get('pk')})
+                    serializer = CourseSelectionCheckSerializer(data=data, context={'pk': self.kwargs.get('pk')})
                     serializer.is_valid(raise_exception=True)
                     termcourse = TermCourse.objects.get(id=pk)
                     if data['option'] == 'add' :
@@ -242,7 +242,7 @@ class CourseSelectionCheckAPIView(views.APIView) :
             else :
                 for pk in request.data['course'] : # counting units of selected courses in the request
                     data =  {'course' : [pk] ,'option': request.data['option']}
-                    serializer = CourseSubstitutionCheckSerializer(data=data, context={'pk': self.kwargs.get('pk')})
+                    serializer = CourseSelectionCheckSerializer(data=data, context={'pk': self.kwargs.get('pk')})
                     serializer.is_valid(raise_exception=True)
                     termcourse = TermCourse.objects.get(id=pk)
                     if data['option'] == 'add' :
@@ -545,10 +545,10 @@ class CourseSelectionSendAPIView(views.APIView) :
         self.check_object_permissions(self.request, student)
         term=Term.objects.all().last()
         registeration_request = RegistrationRequest.objects.filter(term=term, student=student).first()
-        if registeration_request.confirmation_status == 'Not Send' :
+        if registeration_request.confirmation_status == 'not send' :
             registeration_request.confirmation_status = 'waiting'
             registeration_request.save()
-        elif registeration_request.confirmation_status == 'Waiting' :
+        elif registeration_request.confirmation_status == 'waiting' :
             raise PermissionDenied(f"Your are unable to change the confirmation status to waiting twice")
         else :
             raise PermissionDenied(f"Your are unable to change the {registeration_request.confirmation_status} confirmation status to waiting")
@@ -785,7 +785,7 @@ class CourseSubstitutionCheckAPIView(views.APIView) :
                             raise serializers.ValidationError(f"the selected { termcourse } course's exam time interferes with previous courses")
                     exams_time.append((start_added_exam_time, end_added_exam_time))
                     
-                elif data['course'] == 'delete' :
+                elif data['option'] == 'delete' :
                     units -= termcourse.name.units
                     deleted_units += termcourse.name.units
                     deleted_courses += 1
@@ -857,7 +857,7 @@ class CourseSubstitutionCheckAPIView(views.APIView) :
                                 raise serializers.ValidationError(f"the selected { termcourse } course's exam time interferes with previous courses")
                         exams_time.append((start_added_exam_time, end_added_exam_time))
                     
-                    elif data['course'] == 'delete' :
+                    elif data['option'] == 'delete' :
                         units -= termcourse.name.units
                         deleted_units += termcourse.name.units
                         deleted_courses += 1
@@ -926,7 +926,7 @@ class CourseSubstitutionCheckAPIView(views.APIView) :
                                 raise serializers.ValidationError(f"the selected { termcourse } course's exam time interferes with previous courses")
                         exams_time.append((start_added_exam_time, end_added_exam_time))
                         
-                    elif data['course'] == 'delete' :
+                    elif data['option'] == 'delete' :
                         units -= termcourse.name.units
                         deleted_units += termcourse.name.units
                         deleted_courses += 1
@@ -959,6 +959,7 @@ class CourseSubstitutionSubmitAPIView(views.APIView) :
         self.check_object_permissions(self.request, student)
         term=Term.objects.all().last()
         RemovalAndExtension_request = RemovalAndExtensionRequest.objects.filter(term=term, student=student).first()
+        registeration_request = RegistrationRequest.objects.filter(term=term, student=student).first()
         
         if not RemovalAndExtensionRequest.objects.filter(term=term, student=student).exists() :
             raise PermissionDenied("You have not registered for course substitution.")
@@ -1071,11 +1072,15 @@ class CourseSubstitutionSubmitAPIView(views.APIView) :
                         
                         termcourse.course_capacity -= 1
                         termcourse.save()
-                        RemovalAndExtension_request.extended_courses.add(termcourse)
+                        if termcourse in RemovalAndExtension_request.removed_courses.all() and termcourse in registeration_request.courses.all() :
+                            RemovalAndExtension_request.removed_courses.remove(termcourse)
+                        else :
+                            RemovalAndExtension_request.extended_courses.add(termcourse)
+                        
             
                     
                     
-                    elif data['course'] == 'delete' :
+                    elif data['option'] == 'delete' :
                         units -= termcourse.name.units
                         deleted_units += termcourse.name.units
                         deleted_courses += 1
@@ -1090,14 +1095,14 @@ class CourseSubstitutionSubmitAPIView(views.APIView) :
                         
                         start_deleted_exam_time = datetime(termcourse.exam_time.year, termcourse.exam_time.month, termcourse.exam_time.day, termcourse.exam_time.hour, termcourse.exam_time.minute)
                         end_deleted_exam_time = start_deleted_exam_time + timedelta(hours=2)
-                        for exam_time in exams_time :
-                            start = exam_time[0]
-                            end = exam_time[1]
-                            exams_time.remove((start_deleted_exam_time, end_deleted_exam_time))
+                        exams_time.remove((start_deleted_exam_time, end_deleted_exam_time))
                         
                         termcourse.course_capacity += 1
                         termcourse.save()
-                        RemovalAndExtension_request.removed_courses.add(termcourse)
+                        if termcourse in RemovalAndExtension_request.extended_courses.all() :
+                            RemovalAndExtension_request.extended_courses.remove(termcourse)
+                        else :
+                            RemovalAndExtension_request.removed_courses.add(termcourse)
                         
             except Exception as e :
                 print(e)
@@ -1157,9 +1162,13 @@ class CourseSubstitutionSubmitAPIView(views.APIView) :
                             
                             termcourse.course_capacity -= 1
                             termcourse.save()
-                            RemovalAndExtension_request.extended_courses.add(termcourse)
+                            if termcourse in RemovalAndExtension_request.removed_courses.all() and termcourse in registeration_request.courses.all() :
+                                RemovalAndExtension_request.removed_courses.remove(termcourse)
+                            else :
+                                RemovalAndExtension_request.extended_courses.add(termcourse)
                         
-                        elif data['course'] == 'delete' :
+                        
+                        elif data['option'] == 'delete' :
                             units -= termcourse.name.units
                             deleted_units += termcourse.name.units
                             deleted_courses += 1
@@ -1181,7 +1190,10 @@ class CourseSubstitutionSubmitAPIView(views.APIView) :
                                 
                             termcourse.course_capacity += 1
                             termcourse.save()
-                            RemovalAndExtension_request.removed_courses.add(termcourse)
+                            if termcourse in RemovalAndExtension_request.extended_courses.all() :
+                                RemovalAndExtension_request.extended_courses.remove(termcourse)
+                            else :
+                                RemovalAndExtension_request.removed_courses.add(termcourse)
    
                 except Exception as e :
                     print(e)
@@ -1237,9 +1249,12 @@ class CourseSubstitutionSubmitAPIView(views.APIView) :
                             
                             termcourse.course_capacity -= 1
                             termcourse.save()
-                            RemovalAndExtension_request.extended_courses.add(termcourse)
+                            if termcourse in RemovalAndExtension_request.removed_courses.all() and termcourse in registeration_request.courses.all() :
+                                RemovalAndExtension_request.removed_courses.remove(termcourse)
+                            else :
+                                RemovalAndExtension_request.extended_courses.add(termcourse)
                             
-                        elif data['course'] == 'delete' :
+                        elif data['option'] == 'delete' :
                             units -= termcourse.name.units
                             deleted_units += termcourse.name.units
                             deleted_courses += 1
@@ -1261,7 +1276,10 @@ class CourseSubstitutionSubmitAPIView(views.APIView) :
                             
                             termcourse.course_capacity += 1
                             termcourse.save()
-                            RemovalAndExtension_request.removed_courses.add(termcourse)
+                            if termcourse in RemovalAndExtension_request.extended_courses.all() :
+                                RemovalAndExtension_request.extended_courses.remove(termcourse)
+                            else :
+                                RemovalAndExtension_request.removed_courses.add(termcourse)
                                 
                                 
                 except Exception as e :
@@ -1278,7 +1296,7 @@ class CourseSubstitutionSendAPIView(views.APIView) :
         self.check_object_permissions(self.request, student)
         term=Term.objects.all().last()
         registeration_request = RemovalAndExtensionRequest.objects.filter(term=term, student=student).first()
-        if registeration_request.confirmation_status == 'Not Send' :
+        if registeration_request.confirmation_status == 'not send' :
             registeration_request.confirmation_status = 'waiting'
             registeration_request.save()
         elif registeration_request.confirmation_status == 'Waiting' :
@@ -1345,7 +1363,7 @@ class CourseSubstitutionStudentFormsDetailAPIView(views.APIView) :
                     
                 for course in registeration_request.removed_courses.all() :
                     coursestudent = CourseStudent.objects.get(student=student, course=course, course_status='active', term_taken=Term.objects.all().last())
-                    coursestudent.course_status = 'Deleted'
+                    coursestudent.course_status = 'deleted'
                     coursestudent.save()
                     student.courses.remove(coursestudent)
                     

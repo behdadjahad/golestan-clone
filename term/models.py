@@ -40,7 +40,7 @@ class TermCourse(models.Model) :
             f"{day_and_time.get('day')}  {day_and_time.get('start_time')} - {day_and_time.get('end_time')}"
             for day_and_time in self.class_days_and_times
         ]
-        return f"{self.name.course_name} - {', '.join(formatted_days_and_times)}"
+        return f"{self.name.course_name}, {', '.join(formatted_days_and_times)}"
         # return f"{self.name.course_name} - {', '.join(self.class_days_and_times)}"
     
 
@@ -84,9 +84,9 @@ class RemovalAndExtensionRequest(models.Model) :
         ('confirmed', 'Confirmed'),
         ('failed', 'Failed'),
     )
-    term = models.ForeignKey(Term, on_delete=models.PROTECT, null=True, blank=True) # should be edited !!!!!
+    term = models.ForeignKey(Term, on_delete=models.PROTECT)
     student = models.ForeignKey(Student, on_delete=models.CASCADE)
-    removed_courses = models.ManyToManyField(RegistrationRequest, related_name="removed_courses", null=True, blank=True)
+    removed_courses = models.ManyToManyField(TermCourse, related_name="removed_courses", null=True, blank=True)
     extended_courses = models.ManyToManyField(TermCourse, related_name="extended_courses", null=True, blank=True)
     confirmation_status = models.CharField(max_length=10, choices=CONFIRMATION_STATUS_CHOICES, default='Not Send')
     

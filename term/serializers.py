@@ -162,8 +162,9 @@ class CourseSubstitutionCheckSerializer(serializers.Serializer) :
             # 2nd validation
             repeated1 = course in RegistrationRequest.objects.filter(term=Term.objects.all().last(), student=student).first().courses.all()
             repeated2 = course in RemovalAndExtensionRequest.objects.filter(term=Term.objects.all().last(), student=student).first().extended_courses.all()
+            repeated3 = course in RemovalAndExtensionRequest.objects.filter(term=Term.objects.all().last(), student=student).first().removed_courses.all()
             passed = course.coursestudent_set.filter(student=student, course_status='passed').exists()
-            if repeated1 or repeated2 or passed :
+            if (repeated1 or repeated2 or passed) and (not repeated3):
                 raise serializers.ValidationError(f"You have already registered or passed { course } course.") 
             
             # 8th validation
@@ -175,12 +176,12 @@ class CourseSubstitutionCheckSerializer(serializers.Serializer) :
         elif attrs['option'] == 'delete' :
           
             repeated = course in RemovalAndExtensionRequest.objects.filter(term=Term.objects.all().last(), student=student).first().removed_courses.all()
-            if repeated or passed :
+            if repeated :
                 raise serializers.ValidationError(f"You have already removed { course } course.") 
             
             check1 = course in RegistrationRequest.objects.filter(term=Term.objects.all().last(), student=student).first().courses.all()
             check2 = course in RemovalAndExtensionRequest.objects.filter(term=Term.objects.all().last(), student=student).first().extended_courses.all()
-            if not (check1 and check2) :
+            if not (check1 or check2) :
                 raise serializers.ValidationError(f"You haven't registered { course } course.")
             
             # 4th validation
