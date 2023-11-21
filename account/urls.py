@@ -14,4 +14,5 @@ urlpatterns = [
     path('', include(router2.urls)),
     path('students/<int:pk>/class-schedule/', views.StudentClassScheduleView.as_view(), name='class-schedule'),
     path('students/<int:pk>/exam-schedule/', views.StudentExamScheduleView.as_view(), name='exam-schedule'),
+    path('admin/faculties/', views.FacultyApi.as_view(), name='faculties'),
 ]

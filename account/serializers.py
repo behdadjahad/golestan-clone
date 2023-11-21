@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from account.models import Student, Professor
 from term.models import Term, TermCourse
+from faculty.models import Faculty
 
 
 class StudentSerializer(serializers.ModelSerializer) :
@@ -91,3 +92,17 @@ class StudentExamScheduleSerializer(serializers.ModelSerializer) :
             'course_name',
             'exam_time',
         ]
+
+class InputFacultiesSerialiser(serializers.Serializer):
+    name = serializers.CharField(max_length=100)
+
+
+class OutputFacultiesSerialiser(serializers.ModelSerializer):
+    class Meta:
+        model = Faculty
+        fields = "__all__"
+
+class OutputFacultySerialiser(serializers.ModelSerializer):
+    class Meta:
+        model = Faculty
+        fields = ("name",)

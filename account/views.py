@@ -3,14 +3,21 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.generics import get_object_or_404, ListAPIView
+from rest_framework.views import APIView
+
+from django.db.models import QuerySet
+
+from faculty.models import Faculty
 
 from django_filters.rest_framework import DjangoFilterBackend
 
 from .models import Student, EducationalAssistant, Professor
-from .serializers import StudentSerializer, ProfessorSerializer, StudentClassScheduleSerializer, StudentExamScheduleSerializer
+from .serializers import *
 from .permissions import  IsStudentOrEducationalAssistant, IsProfessorOrEducationalAssistant
 from .filters import StudentFilter, ProfessorFilter
 from term.models import TermCourse
+
+# from drf_spectacular.utils import extend_schema
 
 class StudentViewSet(viewsets.ModelViewSet):
     queryset = Student.objects.all()
@@ -86,3 +93,94 @@ class StudentExamScheduleView(ListAPIView) :
             student = Student.objects.get(username=username)
             active_course = student.active_courses
             return active_course
+
+class FacultyApi(APIView):
+
+
+    # class Pagination(LimitOffsetPagination):
+    #     pass
+
+    serializer_class = InputFacultiesSerialiser
+
+    def get_serializer_class(self):
+        if self.request.method == "POST":
+            return OutputFacultiesSerialiser
+        else:
+            return InputFacultiesSerialiser
+
+    # @extend_schema(request=InputFacultiesSerialiser, responses=OutputFacultiesSerialiser)
+    def post(self, request):
+        
+        serializer = self.InputFacultiesSerialiser(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            query = self.create_faculty(name=serializer.validated_data.get("name"))
+        except Exception as ex:
+            return Response(
+                f"Database Error {ex}",
+                status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(self.OutputFacultiesSerialiser(query, context={"request":request}).data)
+    
+    # @extend_schema(responses=OutputFacultiesSerialiser)
+    def get(self, request):
+        query = self.get_faculties()
+        return Response(self.OutputFacultiesSerialiser(query, context={"request":request}, many=True).data)
+
+
+    def create_faculty(self, name:str)-> QuerySet[Faculty]:
+        
+        return Faculty.objects.create(name=name)
+
+
+    def get_faculties(self) -> QuerySet[Faculty]:
+        return Faculty.objects.all()
+
+
+class FacultyDetailApi(APIView):
+
+    serializer_class = OutputFacultySerialiser
+
+    # @extend_schema(responses=OutputFacultySerialiser)
+    def get(self, request, id):
+
+        try:
+            query = self.get_faculty_detail(id=id)
+        except Exception as ex:
+            return Response(
+                f"Database Error {ex}",
+                status=status.HTTP_400_BAD_REQUEST)
+        
+        return Response(self.OutputFacultySerialiser(query, context={"request":request}).data)
+    
+    # @extend_schema(responses=OutputFacultySerialiser)
+    def put(self, request, id):
+        pass
+
+    # @extend_schema(responses=OutputFacultySerialiser)
+    def delete(self, request, id):
+        try:
+            query = self.delete_faculty(id=id)
+        except Exception as ex:
+            return Response(
+                f"Database Error {ex}",
+                status=status.HTTP_400_BAD_REQUEST)
+        
+        return Response(self.OutputFacultySerialiser(query, context={"request":request}).data)
+    
+
+    def get_faculty_detail(self, id:int) -> QuerySet[Faculty]:
+        return Faculty.objects.get(id=id)
+
+    def update_faculty(self) -> QuerySet[Faculty]:
+        pass
+
+    def delete_faculty(self, id:int) -> QuerySet[Faculty]:
+        
+        faculty = Faculty.objects.get(id=id)
+        if faculty is None:
+            raise Exception("There is no faculty with this id.")
+        
+        faculty.delete()
+        
