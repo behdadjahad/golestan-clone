@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from term.models import TermCourse, Term, RegistrationRequest
+from term.models import TermCourse, Term, RegistrationRequest, ReconsiderationRequest
 from account.models import Student
 from datetime import datetime, date
 
@@ -116,3 +116,23 @@ class CourseSelectionStudentFormsSerializers(serializers.ModelSerializer) :
             "student",
             "courses",   
         ]
+
+class InputReconsiderationStudentSerializer(serializers.Serializer):
+    reconsideration_text = serializers.CharField(max_length=1024)
+
+
+class OutputReconsiderationStudentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ReconsiderationRequest
+        fields = "__all__"
+
+
+
+class InputReconsiderationProfessorSerializer(serializers.Serializer):
+    reconsideration_response = serializers.CharField(max_length=1024)
+
+
+class OutputReconsiderationProfessorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ReconsiderationRequest
+        fields = "__all__"

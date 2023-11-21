@@ -9,7 +9,7 @@ from faculty.models import ApprovedCourse, Faculty
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.views import APIView
 from django_filters.rest_framework import DjangoFilterBackend
-
+from rest_framework.views import APIView
 
 
 class FacultyViewSet(ModelViewSet) :
@@ -18,8 +18,6 @@ class FacultyViewSet(ModelViewSet) :
     permission_classes = [AllowAny]
     
     
-    
-
 
 class ApprovedCourseViewSet(ModelViewSet) :
     serializer_class = ApprovedCourseSerializer
@@ -41,3 +39,4 @@ class ApprovedCourseViewSet(ModelViewSet) :
         course = ApprovedCourse.objects.get(id=course_id)
         self.check_object_permissions(self.request, course)
         return course
+

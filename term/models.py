@@ -91,9 +91,10 @@ class RemovalAndExtensionRequest(models.Model) :
     
 class ReconsiderationRequest(models.Model) :
     student = models.ForeignKey(Student, on_delete=models.CASCADE)
-    course = models.ForeignKey(TermCourse, on_delete=models.CASCADE)
-    reconsideration_text = models.TextField()
-    reconsideration_response = models.TextField()
+    course = models.ForeignKey(CourseStudent, on_delete=models.CASCADE, unique=True)
+    reconsideration_text = models.TextField(null=True, blank=True)
+    reconsideration_response = models.TextField(null=True, blank=True)
+
     
     
 class EmergencyRemovalRequest(models.Model) :
