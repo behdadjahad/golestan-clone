@@ -111,7 +111,7 @@ class FacultyApi(APIView):
     # @extend_schema(request=InputFacultiesSerialiser, responses=OutputFacultiesSerialiser)
     def post(self, request):
         
-        serializer = self.InputFacultiesSerialiser(data=request.data)
+        serializer = InputFacultiesSerialiser(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         try:
@@ -121,12 +121,12 @@ class FacultyApi(APIView):
                 f"Database Error {ex}",
                 status=status.HTTP_400_BAD_REQUEST)
 
-        return Response(self.OutputFacultiesSerialiser(query, context={"request":request}).data)
+        return Response(OutputFacultiesSerialiser(query, context={"request":request}).data)
     
     # @extend_schema(responses=OutputFacultiesSerialiser)
     def get(self, request):
         query = self.get_faculties()
-        return Response(self.OutputFacultiesSerialiser(query, context={"request":request}, many=True).data)
+        return Response(OutputFacultiesSerialiser(query, context={"request":request}, many=True).data)
 
 
     def create_faculty(self, name:str)-> QuerySet[Faculty]:
@@ -152,7 +152,7 @@ class FacultyDetailApi(APIView):
                 f"Database Error {ex}",
                 status=status.HTTP_400_BAD_REQUEST)
         
-        return Response(self.OutputFacultySerialiser(query, context={"request":request}).data)
+        return Response(OutputFacultySerialiser(query, context={"request":request}).data)
     
     # @extend_schema(responses=OutputFacultySerialiser)
     def put(self, request, id):
@@ -167,7 +167,7 @@ class FacultyDetailApi(APIView):
                 f"Database Error {ex}",
                 status=status.HTTP_400_BAD_REQUEST)
         
-        return Response(self.OutputFacultySerialiser(query, context={"request":request}).data)
+        return Response(OutputFacultySerialiser(query, context={"request":request}).data)
     
 
     def get_faculty_detail(self, id:int) -> QuerySet[Faculty]:
