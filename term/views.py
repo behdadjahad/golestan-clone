@@ -633,3 +633,65 @@ class ReconsiderationRequestStudentView(APIView):
                 status=status.HTTP_400_BAD_REQUEST)
         
         return Response(OutputReconsiderationStudentSerializer(query, context={"request":request}).data)
+
+
+
+class ReconsiderationRequestProfessorView(APIView):
+
+    serializer_class = InputReconsiderationProfessorSerializer
+
+    def get_serializer_class(self):
+        if self.request.method == "PUT":
+            return OutputReconsiderationProfessorSerializer
+        else :
+            return InputReconsiderationProfessorSerializer
+
+
+    def put(self, request, std_id, co_id):
+        serializer = InputReconsiderationProfessorSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        course = CourseStudent.objects.get(id=co_id)
+        student = Student.objects.get(id=std_id)
+        if ReconsiderationRequest.objects.filter(student=student, course=course).exists():
+            return Response(
+            "Reconsideration request exists.",
+            status=status.HTTP_400_BAD_REQUEST)
+        try:
+            CourseStudent.objects.update(student_score=serializer.validated_data.get("new_grade"))
+        except Exception as ex:
+            return Response(
+                f"Database Error {ex}",
+                status=status.HTTP_400_BAD_REQUEST)
+        try:
+            query = ReconsiderationRequest.objects.update(
+                course=course,
+                student=student,
+                reconsideration_response=serializer.validated_data.get("reconsideration_response"))
+        except Exception as ex:
+            return Response(
+                f"Database Error {ex}",
+                status=status.HTTP_400_BAD_REQUEST)
+        return Response(OutputReconsiderationProfessorSerializer(query, context={"request":request}).data)
+
+    def get(self, request, std_id, co_id):
+        student = Student.objects.get(id=std_id)
+        course = CourseStudent.objects.get(id=co_id)
+        if student is None:
+            return Response(
+                "Student not found with given id.",
+                status=status.HTTP_400_BAD_REQUEST)
+        if course is None:
+            return Response(
+                "Course not found with given id.",
+                status=status.HTTP_400_BAD_REQUEST)
+        try:
+            query = ReconsiderationRequest.objects.get(student=student, course=course)
+        except Exception as ex:
+            return Response(
+                f"Database Error {ex}",
+                status=status.HTTP_400_BAD_REQUEST)
+        
+        return Response(OutputReconsiderationProfessorSerializer(query, context={"request":request}).data)
+
+    

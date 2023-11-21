@@ -130,6 +130,7 @@ class OutputReconsiderationStudentSerializer(serializers.ModelSerializer):
 
 class InputReconsiderationProfessorSerializer(serializers.Serializer):
     reconsideration_response = serializers.CharField(max_length=1024)
+    new_grade = serializers.FloatField()
 
 
 class OutputReconsiderationProfessorSerializer(serializers.ModelSerializer):
