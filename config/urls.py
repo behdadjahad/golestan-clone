@@ -3,7 +3,7 @@ from django.urls import path, include
 
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('admin_panel/', admin.site.urls),
     path('api/v1/users/', include('user.urls')),
     path('api/v1/users/password_reset/', include('django_rest_passwordreset.urls', namespace='password_reset')),
     path('api/v1/faculty/', include('faculty.urls')),
