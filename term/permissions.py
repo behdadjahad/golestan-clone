@@ -43,8 +43,8 @@ class IsSameProfessor(BasePermission):
         username = request.user.username
         professor = Professor.objects.get(username=username)
         return obj == professor 
-<<<<<<< HEAD
-    
+
+
 class IsSameEducationalAssistant(BasePermission) :
     def has_permission(self, request, view) :
         username = request.user.username
@@ -54,7 +54,6 @@ class IsSameEducationalAssistant(BasePermission) :
         username = request.user.username
         eda = EducationalAssistant.objects.get(username=username)
         return obj == eda
-=======
 
 
 class IsStudentForRemoval(BasePermission):
@@ -72,5 +71,3 @@ class IsSupervisor(BasePermission):
     def has_object_permission(self, request, view, obj):
         user = request.user
         return obj.supervisor.id == user.id
-
->>>>>>> origin/feature/endpoint-e-i-j
