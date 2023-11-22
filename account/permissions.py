@@ -28,7 +28,7 @@ class IsProfessorOrEducationalAssistant(BasePermission):
     def has_permission(self, request, view):
         SAFE_METHODS = ['GET', 'PUT']
         user = request.user
-        indivisual = Student.objects.filter(username=user.username).exists() or EducationalAssistant.objects.filter(username=user.username).exists()
+        indivisual = Professor.objects.filter(username=user.username).exists() or EducationalAssistant.objects.filter(username=user.username).exists()
         return request.user.is_authenticated and request.method in SAFE_METHODS and indivisual
 
     def has_object_permission(self, request, view, obj):
@@ -43,3 +43,10 @@ class IsProfessorOrEducationalAssistant(BasePermission):
         
         else:
             return False
+
+class IsItManager(BasePermission):
+    def has_permission(self, request, view):
+        # SAFE_METHODS = ['GET', 'PUT']
+        user = request.user
+        indivisual = ITManager.objects.filter(username=user.username).exists()
+        return request.user.is_authenticated and indivisual
