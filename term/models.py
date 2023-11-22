@@ -89,6 +89,7 @@ class RemovalAndExtensionRequest(models.Model) :
     removed_courses = models.ManyToManyField(TermCourse, related_name="removed_courses", null=True, blank=True)
     extended_courses = models.ManyToManyField(TermCourse, related_name="extended_courses", null=True, blank=True)
     confirmation_status = models.CharField(max_length=10, choices=CONFIRMATION_STATUS_CHOICES, default='Not Send')
+    courses = models.ManyToManyField(TermCourse, null=True, blank=True)
     
     
     

@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'django_rest_passwordreset',
+    'drf_spectacular',
     # app
     'user.apps.UserConfig',
     'term.apps.TermConfig',
@@ -40,6 +41,12 @@ INSTALLED_APPS = [
     'account.apps.AccountConfig',
     
 ]
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'golestan-clone API',
+    'DESCRIPTION': 'golestan-clone API description',
+    # Other settings...
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -135,6 +142,7 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticatedOrReadOnly',
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'PAGE_SIZE': 10
 }
 
