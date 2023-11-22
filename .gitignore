@@ -143,3 +143,5 @@ cython_debug/
 *.csv#
 .DS_Store
 *.svg
+
+.env
