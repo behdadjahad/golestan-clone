@@ -16,6 +16,7 @@ from datetime import datetime, timedelta
 from django.db import transaction
 from django.db.models import Q
 
+
 class TermCourseViewSet(ModelViewSet) :
     serializer_class = TermCourseSerializer
     queryset = TermCourse.objects.all()
