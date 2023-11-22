@@ -19,6 +19,7 @@ from datetime import datetime, timedelta
 from django.db import transaction
 from .models import CourseStudent, ReconsiderationRequest
 
+# ok
 
 class TermCourseViewSet(ModelViewSet) :
     serializer_class = TermCourseSerializer
