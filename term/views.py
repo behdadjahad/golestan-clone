@@ -16,6 +16,7 @@ from account.models import Professor, Student
 from datetime import datetime, timedelta
 
 from django.db import transaction
+import pandas as pd
 
 
 class TermCourseViewSet(ModelViewSet) :
@@ -1430,7 +1431,11 @@ class CourseSubstitutionStudentFormsDetailAPIView(views.APIView) :
         
         else :
             raise PermissionDenied("You are not allowed to see this student's substitution request.")
-    
 
-        
 
+class ExcelFileUpload(views.APIView):
+    def post(self, request):
+        uploaded_file = request.FILES['file']
+        df = pd.read_excel(uploaded_file)
+        data_list = df.values.tolist()
+        return Response({'data_list': data_list})
