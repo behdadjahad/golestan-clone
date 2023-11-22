@@ -37,13 +37,10 @@ urlpatterns = [
     path('student/<int:pk>/course-substitution/send/', views.CourseSubstitutionSendAPIView.as_view(), name='course-substitution-send'),
     path('professor/<int:pk>/students-substitution-forms/', views.CourseSubstitutionStudentFormsAPIView.as_view(), name='students-substitution-forms'),
     path('professor/<int:pk>/students-substitution-forms/<int:s_pk>/', views.CourseSubstitutionStudentFormsDetailAPIView.as_view(), name='student-substitution-form'),
-<<<<<<< HEAD
     
     path('student/<int:s_pk>/', include(router2.urls)),
     path('assistant/<int:pk>/studying-evidence/', views.EnrollmentCertificateRequestsAPIView.as_view(), name='studying-evidences'),
     path('assistant/<int:a_pk>/studying-evidence/<int:pk>/', views.EnrollmentCertificateRequestsDetailAPIView.as_view(), name='studying-evidences-detail'),
-=======
-#  ----------------------------------------------------------------
     path('term/', TermsListView.as_view(), name='term-list'),
     path('term/<int:pk>', TermsDetailView.as_view(),
         name='term-detail'),
@@ -74,6 +71,5 @@ urlpatterns = [
     path('assistant/<int:a_pk>/term_remove/<int:e_pk>',
         TermRemovalDetailView.as_view(),
         name='term-remove-detail'),
-   
->>>>>>> origin/feature/endpoint-e-i-j
+
 ]   
