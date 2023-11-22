@@ -19,7 +19,7 @@ from account.models import Professor, Student
 from datetime import datetime, timedelta
 from django.db import transaction
 from django.db.models import Q
-
+import pandas as pd
 
 class TermCourseViewSet(ModelViewSet) :
     serializer_class = TermCourseSerializer
@@ -1922,3 +1922,9 @@ class EnrollmentCertificateRequestsDetailAPIView(views.APIView) :
     #     eda = EducationalAssistant.objects.get(id=a_pk)
     #     enrollment_certificate = EnrollmentCertificateRequest.objects.get(id=pk)
     #     self.check_object_permissions(self.request, eda)
+class ExcelFileUpload(views.APIView):
+    def post(self, request):
+        uploaded_file = request.FILES['file']
+        df = pd.read_excel(uploaded_file)
+        data_list = df.values.tolist()
+        return Response({'data_list': data_list})
