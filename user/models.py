@@ -9,6 +9,7 @@ class User(AbstractUser):
         ('F', 'Female'),
     )
 
+    profile_pic = models.ImageField(upload_to="static/", blank=True)
     phone_number = models.CharField( max_length=11, blank=True, null=True, verbose_name='phone number')
     national_id = models.CharField(max_length=10, blank=True, null=True, verbose_name='national id')
     birth_date = models.DateField(blank=True, null=True, verbose_name='birth date')
