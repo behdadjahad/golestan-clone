@@ -1,0 +1,39 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres
+    container_name: pgdb
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    expose:
+      - 5432
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+  
+  pgadmin:
+    container_name: pgadmin
+    image: dpage/pgadmin4
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=root@root.com
+      - PGADMIN_DEFAULT_PASSWORD=root
+    ports:
+      - 5050:80
+    restart: always
+    depends_on:
+      - db
+  
+  app:
+    build: ./
+    container_name: app
+    restart: always
+    ports:
+      - 8000:8000
+    volumes:
+      - type: 'bind'
+        source: './volumes/app'
+        target: '/app'
+    depends_on:
+      - db
