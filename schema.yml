@@ -1,0 +1,2178 @@
+openapi: 3.0.3
+info:
+  title: golestan-clone API
+  version: 0.0.0
+  description: golestan-clone API description
+paths:
+  /api/v1/account/professors/:
+    get:
+      operationId: api_v1_account_professors_list
+      parameters:
+      - in: query
+        name: degree
+        schema:
+          type: string
+      - in: query
+        name: faculty
+        schema:
+          type: string
+      - in: query
+        name: first_name
+        schema:
+          type: string
+      - in: query
+        name: last_name
+        schema:
+          type: string
+      - in: query
+        name: major
+        schema:
+          type: string
+      - in: query
+        name: national_id
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: professor_number
+        schema:
+          type: string
+      tags:
+      - api
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedProfessorList'
+          description: ''
+    post:
+      operationId: api_v1_account_professors_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Professor'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Professor'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Professor'
+        required: true
+      security:
+      - tokenAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Professor'
+          description: ''
+  /api/v1/account/professors/{id}/:
+    get:
+      operationId: api_v1_account_professors_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this professor.
+        required: true
+      tags:
+      - api
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Professor'
+          description: ''
+    put:
+      operationId: api_v1_account_professors_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this professor.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Professor'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Professor'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Professor'
+        required: true
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Professor'
+          description: ''
+    patch:
+      operationId: api_v1_account_professors_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this professor.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedProfessor'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedProfessor'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedProfessor'
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Professor'
+          description: ''
+    delete:
+      operationId: api_v1_account_professors_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this professor.
+        required: true
+      tags:
+      - api
+      security:
+      - tokenAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/account/students/:
+    get:
+      operationId: api_v1_account_students_list
+      parameters:
+      - in: query
+        name: faculty
+        schema:
+          type: string
+      - in: query
+        name: first_name
+        schema:
+          type: string
+      - in: query
+        name: intrance_year
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: last_name
+        schema:
+          type: string
+      - in: query
+        name: major
+        schema:
+          type: string
+      - in: query
+        name: militery_service_status
+        schema:
+          type: string
+          enum:
+          - cardservice
+          - educationalexempt
+          - exempt
+        description: |-
+          * `exempt` - Exempt
+          * `cardservice` - CardService
+          * `educationalexempt` - EducationalExempt
+      - in: query
+        name: national_id
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: student_number
+        schema:
+          type: string
+      tags:
+      - api
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedStudentList'
+          description: ''
+    post:
+      operationId: api_v1_account_students_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Student'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Student'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Student'
+      security:
+      - tokenAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Student'
+          description: ''
+  /api/v1/account/students/{id}/:
+    get:
+      operationId: api_v1_account_students_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this student.
+        required: true
+      tags:
+      - api
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Student'
+          description: ''
+    put:
+      operationId: api_v1_account_students_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this student.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Student'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Student'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Student'
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Student'
+          description: ''
+    patch:
+      operationId: api_v1_account_students_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this student.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedStudent'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedStudent'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedStudent'
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Student'
+          description: ''
+    delete:
+      operationId: api_v1_account_students_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this student.
+        required: true
+      tags:
+      - api
+      security:
+      - tokenAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/account/students/{id}/class-schedule/:
+    get:
+      operationId: api_v1_account_students_class_schedule_list
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - api
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedStudentClassScheduleList'
+          description: ''
+  /api/v1/account/students/{id}/exam-schedule/:
+    get:
+      operationId: api_v1_account_students_exam_schedule_list
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - api
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedStudentExamScheduleList'
+          description: ''
+  /api/v1/faculty/faculties/:
+    get:
+      operationId: api_v1_faculty_faculties_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - api
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedFacultyList'
+          description: ''
+    post:
+      operationId: api_v1_faculty_faculties_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Faculty'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Faculty'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Faculty'
+        required: true
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Faculty'
+          description: ''
+  /api/v1/faculty/faculties/{id}/:
+    get:
+      operationId: api_v1_faculty_faculties_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this faculty.
+        required: true
+      tags:
+      - api
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Faculty'
+          description: ''
+    put:
+      operationId: api_v1_faculty_faculties_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this faculty.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Faculty'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Faculty'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Faculty'
+        required: true
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Faculty'
+          description: ''
+    patch:
+      operationId: api_v1_faculty_faculties_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this faculty.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedFaculty'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedFaculty'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedFaculty'
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Faculty'
+          description: ''
+    delete:
+      operationId: api_v1_faculty_faculties_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this faculty.
+        required: true
+      tags:
+      - api
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /api/v1/faculty/subjects/:
+    get:
+      operationId: api_v1_faculty_subjects_list
+      parameters:
+      - in: query
+        name: course_name
+        schema:
+          type: string
+      - in: query
+        name: faculty
+        schema:
+          type: integer
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - api
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedApprovedCourseList'
+          description: ''
+    post:
+      operationId: api_v1_faculty_subjects_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApprovedCourse'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ApprovedCourse'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ApprovedCourse'
+        required: true
+      security:
+      - tokenAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApprovedCourse'
+          description: ''
+  /api/v1/faculty/subjects/{id}/:
+    get:
+      operationId: api_v1_faculty_subjects_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this approved course.
+        required: true
+      tags:
+      - api
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApprovedCourse'
+          description: ''
+    put:
+      operationId: api_v1_faculty_subjects_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this approved course.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApprovedCourse'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ApprovedCourse'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ApprovedCourse'
+        required: true
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApprovedCourse'
+          description: ''
+    patch:
+      operationId: api_v1_faculty_subjects_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this approved course.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedApprovedCourse'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedApprovedCourse'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedApprovedCourse'
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApprovedCourse'
+          description: ''
+    delete:
+      operationId: api_v1_faculty_subjects_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this approved course.
+        required: true
+      tags:
+      - api
+      security:
+      - tokenAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/term/courses/:
+    get:
+      operationId: api_v1_term_courses_list
+      parameters:
+      - in: query
+        name: course_name
+        schema:
+          type: string
+      - in: query
+        name: faculty
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - in: query
+        name: term
+        schema:
+          type: integer
+      tags:
+      - api
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTermCourseList'
+          description: ''
+    post:
+      operationId: api_v1_term_courses_create
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TermCourse'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TermCourse'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TermCourse'
+        required: true
+      security:
+      - tokenAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TermCourse'
+          description: ''
+  /api/v1/term/courses/{id}/:
+    get:
+      operationId: api_v1_term_courses_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this term course.
+        required: true
+      tags:
+      - api
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TermCourse'
+          description: ''
+    put:
+      operationId: api_v1_term_courses_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this term course.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TermCourse'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TermCourse'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TermCourse'
+        required: true
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TermCourse'
+          description: ''
+    patch:
+      operationId: api_v1_term_courses_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this term course.
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedTermCourse'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedTermCourse'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedTermCourse'
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TermCourse'
+          description: ''
+    delete:
+      operationId: api_v1_term_courses_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this term course.
+        required: true
+      tags:
+      - api
+      security:
+      - tokenAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/term/professor/{id}/students-selection-forms/:
+    get:
+      operationId: api_v1_term_professor_students_selection_forms_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/term/professor/{id}/students-selection-forms/{s_pk}/:
+    get:
+      operationId: api_v1_term_professor_students_selection_forms_retrieve_2
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: s_pk
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          description: No response body
+    post:
+      operationId: api_v1_term_professor_students_selection_forms_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: s_pk
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/term/professor/{id}/students-substitution-forms/:
+    get:
+      operationId: api_v1_term_professor_students_substitution_forms_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/term/professor/{id}/students-substitution-forms/{s_pk}/:
+    get:
+      operationId: api_v1_term_professor_students_substitution_forms_retrieve_2
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: s_pk
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          description: No response body
+    post:
+      operationId: api_v1_term_professor_students_substitution_forms_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: s_pk
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/term/professor/{std_id}/course/{co_id}/reconsideration/:
+    get:
+      operationId: api_v1_term_professor_course_reconsideration_retrieve
+      parameters:
+      - in: path
+        name: co_id
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: std_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InputReconsiderationProfessor'
+          description: ''
+    put:
+      operationId: api_v1_term_professor_course_reconsideration_update
+      parameters:
+      - in: path
+        name: co_id
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: std_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OutputReconsiderationProfessor'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OutputReconsiderationProfessor'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OutputReconsiderationProfessor'
+        required: true
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OutputReconsiderationProfessor'
+          description: ''
+  /api/v1/term/student/{id}/course-selection/:
+    get:
+      operationId: api_v1_term_student_course_selection_list
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - api
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCourseSelectionList'
+          description: ''
+  /api/v1/term/student/{id}/course-selection/check/:
+    post:
+      operationId: api_v1_term_student_course_selection_check_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/term/student/{id}/course-selection/create/:
+    post:
+      operationId: api_v1_term_student_course_selection_create_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseSelection'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CourseSelection'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CourseSelection'
+        required: true
+      security:
+      - tokenAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseSelection'
+          description: ''
+  /api/v1/term/student/{id}/course-selection/send/:
+    post:
+      operationId: api_v1_term_student_course_selection_send_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/term/student/{id}/course-selection/submit/:
+    post:
+      operationId: api_v1_term_student_course_selection_submit_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/term/student/{id}/course-substitution/:
+    get:
+      operationId: api_v1_term_student_course_substitution_list
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      tags:
+      - api
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCourseSubstitutionList'
+          description: ''
+  /api/v1/term/student/{id}/course-substitution/check/:
+    post:
+      operationId: api_v1_term_student_course_substitution_check_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/term/student/{id}/course-substitution/create/:
+    post:
+      operationId: api_v1_term_student_course_substitution_create_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CourseSubstitution'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/CourseSubstitution'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CourseSubstitution'
+        required: true
+      security:
+      - tokenAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CourseSubstitution'
+          description: ''
+  /api/v1/term/student/{id}/course-substitution/send/:
+    post:
+      operationId: api_v1_term_student_course_substitution_send_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/term/student/{id}/course-substitution/submit/:
+    post:
+      operationId: api_v1_term_student_course_substitution_submit_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/term/student/{std_id}/course/{co_id}/reconsideration/:
+    get:
+      operationId: api_v1_term_student_course_reconsideration_retrieve
+      parameters:
+      - in: path
+        name: co_id
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: std_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InputReconsiderationStudent'
+          description: ''
+    post:
+      operationId: api_v1_term_student_course_reconsideration_create
+      parameters:
+      - in: path
+        name: co_id
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: std_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OutputReconsiderationStudent'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OutputReconsiderationStudent'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OutputReconsiderationStudent'
+        required: true
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OutputReconsiderationStudent'
+          description: ''
+    put:
+      operationId: api_v1_term_student_course_reconsideration_update
+      parameters:
+      - in: path
+        name: co_id
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: std_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OutputReconsiderationStudent'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/OutputReconsiderationStudent'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/OutputReconsiderationStudent'
+        required: true
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OutputReconsiderationStudent'
+          description: ''
+    delete:
+      operationId: api_v1_term_student_course_reconsideration_destroy
+      parameters:
+      - in: path
+        name: co_id
+        schema:
+          type: integer
+        required: true
+      - in: path
+        name: std_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - api
+      security:
+      - tokenAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/users/change_password/:
+    post:
+      operationId: api_v1_users_change_password_create
+      tags:
+      - api
+      security:
+      - tokenAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/users/login/:
+    post:
+      operationId: api_v1_users_login_create
+      tags:
+      - api
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/v1/users/logout/:
+    post:
+      operationId: api_v1_users_logout_create
+      tags:
+      - api
+      security:
+      - tokenAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/v1/users/password_reset/:
+    post:
+      operationId: api_v1_users_password_reset_create
+      description: |-
+        An Api View which provides a method to request a password reset token based on an e-mail address
+
+        Sends a signal reset_password_token_created when a reset token was created
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Email'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Email'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Email'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Email'
+          description: ''
+  /api/v1/users/password_reset/confirm/:
+    post:
+      operationId: api_v1_users_password_reset_confirm_create
+      description: An Api View which provides a method to reset a password based on
+        a unique token
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordToken'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PasswordToken'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PasswordToken'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PasswordToken'
+          description: ''
+  /api/v1/users/password_reset/validate_token/:
+    post:
+      operationId: api_v1_users_password_reset_validate_token_create
+      description: An Api View which provides a method to verify that a token is valid
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetToken'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ResetToken'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ResetToken'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResetToken'
+          description: ''
+components:
+  schemas:
+    ApprovedCourse:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        course_name:
+          type: string
+          maxLength: 100
+        faculty:
+          type: integer
+        pre_requisites:
+          type: array
+          items:
+            type: integer
+            nullable: true
+        co_requisites:
+          type: array
+          items:
+            type: integer
+            nullable: true
+        units:
+          type: integer
+        course_type:
+          $ref: '#/components/schemas/CourseTypeEnum'
+      required:
+      - course_name
+      - course_type
+      - faculty
+      - id
+      - units
+    ConfirmationStatusEnum:
+      enum:
+      - not send
+      - waiting
+      - confirmed
+      - failed
+      type: string
+      description: |-
+        * `not send` - Not Send
+        * `waiting` - Waiting
+        * `confirmed` - Confirmed
+        * `failed` - Failed
+    CourseSelection:
+      type: object
+      properties:
+        term:
+          type: integer
+        student:
+          type: integer
+        courses:
+          type: array
+          items:
+            type: integer
+            nullable: true
+        confirmation_status:
+          $ref: '#/components/schemas/ConfirmationStatusEnum'
+      required:
+      - student
+      - term
+    CourseSubstitution:
+      type: object
+      properties:
+        term:
+          type: integer
+        student:
+          type: integer
+        courses:
+          type: array
+          items:
+            type: integer
+            nullable: true
+        removed_courses:
+          type: array
+          items:
+            type: integer
+            nullable: true
+        extended_courses:
+          type: array
+          items:
+            type: integer
+            nullable: true
+        confirmation_status:
+          $ref: '#/components/schemas/ConfirmationStatusEnum'
+      required:
+      - student
+      - term
+    CourseTypeEnum:
+      enum:
+      - general
+      - specialized
+      - basic
+      - theorical
+      - practical
+      type: string
+      description: |-
+        * `general` - Genaral
+        * `specialized` - Specialized
+        * `basic` - Basic
+        * `theorical` - Theorical
+        * `practical` - Practical
+    Email:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+      required:
+      - email
+    Faculty:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+      required:
+      - id
+      - name
+    InputReconsiderationProfessor:
+      type: object
+      properties:
+        reconsideration_response:
+          type: string
+          maxLength: 1024
+        new_grade:
+          type: number
+          format: double
+      required:
+      - new_grade
+      - reconsideration_response
+    InputReconsiderationStudent:
+      type: object
+      properties:
+        reconsideration_text:
+          type: string
+          maxLength: 1024
+      required:
+      - reconsideration_text
+    MiliteryServiceStatusEnum:
+      enum:
+      - exempt
+      - cardservice
+      - educationalexempt
+      type: string
+      description: |-
+        * `exempt` - Exempt
+        * `cardservice` - CardService
+        * `educationalexempt` - EducationalExempt
+    OutputReconsiderationProfessor:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        reconsideration_text:
+          type: string
+          nullable: true
+        reconsideration_response:
+          type: string
+          nullable: true
+        student:
+          type: integer
+        course:
+          type: integer
+      required:
+      - course
+      - id
+      - student
+    OutputReconsiderationStudent:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        reconsideration_text:
+          type: string
+          nullable: true
+        reconsideration_response:
+          type: string
+          nullable: true
+        student:
+          type: integer
+        course:
+          type: integer
+      required:
+      - course
+      - id
+      - student
+    PaginatedApprovedCourseList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApprovedCourse'
+    PaginatedCourseSelectionList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/CourseSelection'
+    PaginatedCourseSubstitutionList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/CourseSubstitution'
+    PaginatedFacultyList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Faculty'
+    PaginatedProfessorList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Professor'
+    PaginatedStudentClassScheduleList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/StudentClassSchedule'
+    PaginatedStudentExamScheduleList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/StudentExamSchedule'
+    PaginatedStudentList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Student'
+    PaginatedTermCourseList:
+      type: object
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/TermCourse'
+    PasswordToken:
+      type: object
+      properties:
+        password:
+          type: string
+        token:
+          type: string
+      required:
+      - password
+      - token
+    PatchedApprovedCourse:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        course_name:
+          type: string
+          maxLength: 100
+        faculty:
+          type: integer
+        pre_requisites:
+          type: array
+          items:
+            type: integer
+            nullable: true
+        co_requisites:
+          type: array
+          items:
+            type: integer
+            nullable: true
+        units:
+          type: integer
+        course_type:
+          $ref: '#/components/schemas/CourseTypeEnum'
+    PatchedFaculty:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+    PatchedProfessor:
+      type: object
+      properties:
+        pk:
+          type: integer
+          readOnly: true
+          title: ID
+        first_name:
+          type: string
+          maxLength: 150
+        last_name:
+          type: string
+          maxLength: 150
+        professor_number:
+          type: string
+          readOnly: true
+        faculty_name:
+          type: string
+          readOnly: true
+        presented_courses:
+          type: string
+          readOnly: true
+        major:
+          type: string
+          readOnly: true
+        expertise:
+          type: string
+          readOnly: true
+        degree:
+          type: string
+          maxLength: 100
+    PatchedStudent:
+      type: object
+      properties:
+        pk:
+          type: integer
+          readOnly: true
+          title: ID
+        first_name:
+          type: string
+          maxLength: 150
+        last_name:
+          type: string
+          maxLength: 150
+        student_number:
+          type: string
+          readOnly: true
+        intrance_year:
+          type: string
+          format: date
+          readOnly: true
+        faculty_name:
+          type: string
+          readOnly: true
+        major_name:
+          type: string
+          readOnly: true
+        supervisor_name:
+          type: string
+          readOnly: true
+        militery_service_status:
+          allOf:
+          - $ref: '#/components/schemas/MiliteryServiceStatusEnum'
+          readOnly: true
+        courses:
+          type: array
+          items:
+            type: integer
+            nullable: true
+          readOnly: true
+        years:
+          type: integer
+          readOnly: true
+    PatchedTermCourse:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: integer
+        class_days_and_times:
+          type: object
+          additionalProperties: {}
+          description: Select class days and times in JSON format
+        exam_time:
+          type: string
+          format: date-time
+          nullable: true
+        exam_place:
+          type: string
+          nullable: true
+          maxLength: 100
+        course_professor:
+          type: integer
+        course_capacity:
+          type: integer
+        term:
+          type: integer
+    Professor:
+      type: object
+      properties:
+        pk:
+          type: integer
+          readOnly: true
+          title: ID
+        first_name:
+          type: string
+          maxLength: 150
+        last_name:
+          type: string
+          maxLength: 150
+        professor_number:
+          type: string
+          readOnly: true
+        faculty_name:
+          type: string
+          readOnly: true
+        presented_courses:
+          type: string
+          readOnly: true
+        major:
+          type: string
+          readOnly: true
+        expertise:
+          type: string
+          readOnly: true
+        degree:
+          type: string
+          maxLength: 100
+      required:
+      - degree
+      - expertise
+      - faculty_name
+      - major
+      - pk
+      - presented_courses
+      - professor_number
+    ResetToken:
+      type: object
+      properties:
+        token:
+          type: string
+      required:
+      - token
+    Student:
+      type: object
+      properties:
+        pk:
+          type: integer
+          readOnly: true
+          title: ID
+        first_name:
+          type: string
+          maxLength: 150
+        last_name:
+          type: string
+          maxLength: 150
+        student_number:
+          type: string
+          readOnly: true
+        intrance_year:
+          type: string
+          format: date
+          readOnly: true
+        faculty_name:
+          type: string
+          readOnly: true
+        major_name:
+          type: string
+          readOnly: true
+        supervisor_name:
+          type: string
+          readOnly: true
+        militery_service_status:
+          allOf:
+          - $ref: '#/components/schemas/MiliteryServiceStatusEnum'
+          readOnly: true
+        courses:
+          type: array
+          items:
+            type: integer
+            nullable: true
+          readOnly: true
+        years:
+          type: integer
+          readOnly: true
+      required:
+      - courses
+      - faculty_name
+      - intrance_year
+      - major_name
+      - militery_service_status
+      - pk
+      - student_number
+      - supervisor_name
+      - years
+    StudentClassSchedule:
+      type: object
+      properties:
+        course_name:
+          type: string
+          readOnly: true
+        class_days_and_times:
+          type: object
+          additionalProperties: {}
+          description: Select class days and times in JSON format
+      required:
+      - class_days_and_times
+      - course_name
+    StudentExamSchedule:
+      type: object
+      properties:
+        course_name:
+          type: string
+          readOnly: true
+        exam_time:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - course_name
+    TermCourse:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: integer
+        class_days_and_times:
+          type: object
+          additionalProperties: {}
+          description: Select class days and times in JSON format
+        exam_time:
+          type: string
+          format: date-time
+          nullable: true
+        exam_place:
+          type: string
+          nullable: true
+          maxLength: 100
+        course_professor:
+          type: integer
+        course_capacity:
+          type: integer
+        term:
+          type: integer
+      required:
+      - class_days_and_times
+      - course_capacity
+      - course_professor
+      - id
+      - name
+      - term
+  securitySchemes:
+    tokenAuth:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: Token-based authentication with required prefix "Token"
