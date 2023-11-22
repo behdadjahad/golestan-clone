@@ -539,7 +539,7 @@ class CourseSelectionStudentFormsDetailAPIView(views.APIView) :
         
         
 class ReconsiderationRequestStudentView(APIView):
-
+    # permission_classes = [IsAuthenticated, IsSameStudent]
     serializer_class = InputReconsiderationStudentSerializer
 
     def get_serializer_class(self):
@@ -637,7 +637,7 @@ class ReconsiderationRequestStudentView(APIView):
 
 
 class ReconsiderationRequestProfessorView(APIView):
-
+    # permission_classes = [IsAuthenticated, IsSameProfessor]
     serializer_class = InputReconsiderationProfessorSerializer
 
     def get_serializer_class(self):
@@ -653,9 +653,9 @@ class ReconsiderationRequestProfessorView(APIView):
 
         course = CourseStudent.objects.get(id=co_id)
         student = Student.objects.get(id=std_id)
-        if ReconsiderationRequest.objects.filter(student=student, course=course).exists():
+        if not ReconsiderationRequest.objects.filter(student=student, course=course).exists():
             return Response(
-            "Reconsideration request exists.",
+            "Reconsideration request dose not exist.",
             status=status.HTTP_400_BAD_REQUEST)
         try:
             CourseStudent.objects.update(student_score=serializer.validated_data.get("new_grade"))
