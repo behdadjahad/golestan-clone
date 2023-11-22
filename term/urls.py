@@ -29,5 +29,37 @@ urlpatterns = [
     path('student/<int:pk>/course-substitution/send/', views.CourseSubstitutionSendAPIView.as_view(), name='course-substitution-send'),
     path('professor/<int:pk>/students-substitution-forms/', views.CourseSubstitutionStudentFormsAPIView.as_view(), name='students-substitution-forms'),
     path('professor/<int:pk>/students-substitution-forms/<int:s_pk>/', views.CourseSubstitutionStudentFormsDetailAPIView.as_view(), name='student-substitution-form'),
-    
+
+
+        path('term/', views.TermsListView.as_view(), name='term-list'),
+    path('term/<int:pk>', views.TermsDetailView.as_view(),
+        name='term-detail'),
+    path('student/<int:pk>/my_courses', views.StudentApprovedCourseView.as_view(),
+        name='student-approvedcourses'),
+    path('student/<int:pk>/passed_courses_report',
+        views.StudentPassedCourseView.as_view(), name='student-passed-courses'),
+    path('student/<int:pk>/term_courses',
+        views.StudentTermCourseView.as_view(), name='student-term-courses'),
+    path('student/<int:pk>/remaining_terms',
+        views.StudentRemainedTermView.as_view(), name='student-remained-term'),
+    path('student/<int:s_pk>/emergency_remove/<int:c_pk>',
+        views.EmergencyRemoveRequestView.as_view(),
+        name='emergency-remove-request'),
+    path('assistant/<int:pk>/emergency_remove',
+        views.CourseRemovalListView.as_view(),
+        name='emergency-remove-list'),
+    path('assistant/<int:s_pk>/emergency_remove/<int:c_pk>',
+        views.CourseRemovalDetailView.as_view(),
+        name='emergency-remove-detail'),
+
+    path('student/<int:a_pk>/term_remove/<int:e_pk>',
+        views.TermRemoveRequestView.as_view(),
+        name='term-remove-request'),
+    path('assistant/<int:pk>/term',
+        views.TermRemovalListView.as_view(),
+        name='term-remove-list'),
+    path('assistant/<int:a_pk>/term_remove/<int:e_pk>',
+        views.TermRemovalDetailView.as_view(),
+        name='term-remove-detail'),
+   
 ]   
