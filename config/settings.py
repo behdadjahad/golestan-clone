@@ -146,3 +146,53 @@ EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 EMAIL_PORT = os.getenv('EMAIL_PORT')
 EMAIL_USE_TLS = True
 EMAIL_USE_SSL = False
+
+
+
+LOGGING = {
+    'version': 1,
+    'loggers': {
+        'django': {
+            'handlers': ['file1', 'file2', 'file3', 'file4', 'file5'],
+            'level': 'DEBUG'
+        }
+    },
+    'handlers': {
+        'file1': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': './logs/info.log',
+            'formatter': 'simple',
+        },
+        'file2': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': './logs/debug.log',
+            'formatter': 'simple',
+        },
+        'file3': {
+            'level': 'WARNING',
+            'class': 'logging.FileHandler',
+            'filename': './logs/warning.log',
+            'formatter': 'simple',
+        },
+        'file4': {
+            'level': 'ERROR',
+            'class': 'logging.FileHandler',
+            'filename': './logs/error.log',
+            'formatter': 'simple',
+        },
+        'file5': {
+            'level': 'CRITICAL',
+            'class': 'logging.FileHandler',
+            'filename': './logs/critical.log',
+            'formatter': 'simple',
+        },
+    },
+    'formatters': {
+        'simple': {
+            'format': '{asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        }
+    }
+}

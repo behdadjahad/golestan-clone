@@ -1,6 +1,12 @@
 from django.urls import path, include
 from term import views
 from rest_framework.routers import DefaultRouter
+from term.views import (
+    TermsListView, TermsDetailView,
+    StudentApprovedCourseView, StudentPassedCourseView, StudentTermCourseView,
+    StudentRemainedTermView, EmergencyRemoveRequestView, CourseRemovalListView,
+    CourseRemovalDetailView, TermRemoveRequestView, TermRemovalListView,
+    TermRemovalDetailView)
 
 app_name = 'term'
 
@@ -29,5 +35,36 @@ urlpatterns = [
     path('student/<int:pk>/course-substitution/send/', views.CourseSubstitutionSendAPIView.as_view(), name='course-substitution-send'),
     path('professor/<int:pk>/students-substitution-forms/', views.CourseSubstitutionStudentFormsAPIView.as_view(), name='students-substitution-forms'),
     path('professor/<int:pk>/students-substitution-forms/<int:s_pk>/', views.CourseSubstitutionStudentFormsDetailAPIView.as_view(), name='student-substitution-form'),
-    
+#  ----------------------------------------------------------------
+    path('term/', TermsListView.as_view(), name='term-list'),
+    path('term/<int:pk>', TermsDetailView.as_view(),
+        name='term-detail'),
+    path('student/<int:pk>/my_courses', StudentApprovedCourseView.as_view(),
+        name='student-approvedcourses'),
+    path('student/<int:pk>/passed_courses_report',
+        StudentPassedCourseView.as_view(), name='student-passed-courses'),
+    path('student/<int:pk>/term_courses',
+        StudentTermCourseView.as_view(), name='student-term-courses'),
+    path('student/<int:pk>/remaining_terms',
+        StudentRemainedTermView.as_view(), name='student-remained-term'),
+    path('student/<int:s_pk>/emergency_remove/<int:c_pk>',
+        EmergencyRemoveRequestView.as_view(),
+        name='emergency-remove-request'),
+    path('assistant/<int:pk>/emergency_remove',
+        CourseRemovalListView.as_view(),
+        name='emergency-remove-list'),
+    path('assistant/<int:s_pk>/emergency_remove/<int:c_pk>',
+        CourseRemovalDetailView.as_view(),
+        name='emergency-remove-detail'),
+
+    path('student/<int:a_pk>/term_remove/<int:e_pk>',
+        TermRemoveRequestView.as_view(),
+        name='term-remove-request'),
+    path('assistant/<int:pk>/term',
+        TermRemovalListView.as_view(),
+        name='term-remove-list'),
+    path('assistant/<int:a_pk>/term_remove/<int:e_pk>',
+        TermRemovalDetailView.as_view(),
+        name='term-remove-detail'),
+   
 ]   

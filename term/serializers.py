@@ -3,6 +3,39 @@ from term.models import *
 from account.models import Student
 from datetime import datetime, date
 
+
+class TermSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Term
+
+        fields = '__all__'
+
+
+class CourseStudentSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = CourseStudent
+
+        fields = '__all__'
+
+
+class EmergencyRemoveSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = EmergencyRemovalRequest
+
+        fields = "__all__"
+
+
+class TermRemoveSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = TermRemovalRequest
+
+        fields = "__all__"
+
+
 class TermCourseSerializer(serializers.ModelSerializer) :
     # course_name = serializers.StringRelatedField(source='name.course_name', read_only=True)
     # term_name = serializers.StringRelatedField(source='term.term_name', read_only=True)

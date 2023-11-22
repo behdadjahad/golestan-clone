@@ -1,24 +1,20 @@
 from rest_framework.viewsets import ModelViewSet
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from term.models import Term, TermCourse, RegistrationRequest, CourseStudent, RemovalAndExtensionRequest
-from term.serializers import CourseSubstitutionCheckSerializer, TermCourseSerializer
+from rest_framework import permissions
+from term.models import *
+from term.serializers import *
+from account.serializers import *
 from term.filters import TermCourseFilter
-from term.permissions import IsITManagerOrEducationalAssistantWithSameFaculty, IsSameStudent, IsSameProfessor
+from term.permissions import *
 from rest_framework.response import Response
 from rest_framework import status, generics, views, serializers
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.views import APIView
-
-from term.serializers import *
-
 from account.models import Professor, Student
-
 from datetime import datetime, timedelta
-
 from django.db import transaction
-from .models import CourseStudent, ReconsiderationRequest
-
+from django.db.models import Q
 
 class TermCourseViewSet(ModelViewSet) :
     serializer_class = TermCourseSerializer
@@ -1536,3 +1532,291 @@ class ReconsiderationRequestProfessorView(APIView):
         return Response(OutputReconsiderationProfessorSerializer(query, context={"request":request}).data)
 
 
+class TermsListView(APIView):
+
+    permission_classes = [
+        permissions.IsAuthenticated,
+        (IsSameStudent | IsSameProfessor),
+    ]
+
+    def get(self, request):
+        queryset = Term.objects.all()
+        self.check_permissions(request, queryset)
+        ser_data = TermSerializer(instance=queryset, many=True)
+        if ser_data.is_valid():
+            return Response(ser_data.data, status=status.HTTP_200_OK)
+
+        return Response(ser_data.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class TermsDetailView(APIView):
+
+    permission_classes = [
+        permissions.IsAuthenticated,
+        (IsSameStudent | IsSameProfessor),
+    ]
+
+    def get(self, request, pk):
+        queryset = Term.objects.get(pk=pk)
+        self.check_object_permissions(request, queryset)
+        ser_data = TermSerializer(instance=queryset, many=True)
+        if ser_data.is_valid():
+            return Response(ser_data.data, status=status.HTTP_200_OK)
+
+        return Response(ser_data.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class StudentApprovedCourseView(APIView):
+    permission_classes = [
+        permissions.IsAuthenticated,
+        IsSameStudent,
+    ]
+
+    def get(self, request, pk):
+        student = Student.objects.get(pk=pk)
+        self.check_object_permissions(request, student)
+        course_list = CourseStudent.objects.filter(student=student)
+        course_list.exclude(course_status__in=['active', 'passed'])
+        course_list.filter(Q(
+            course__pre_requisites__in=student.passed_courses) | Q(
+            course__co_requisites__in=student.passed_courses)).distinct()
+        ser_data = CourseStudentSerializer(instance=course_list, many=True)
+        if ser_data.is_valid():
+            return Response(ser_data.data, status=status.HTTP_200_OK)
+
+        return Response(ser_data.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class StudentPassedCourseView(APIView):
+    permission_classes = [
+        permissions.IsAuthenticated,
+        IsITManagerOrEducationalAssistantWithSameFaculty | IsSameStudent | IsSupervisor,
+    ]
+
+    def get(self, request, pk):
+        student = Student.objects.get(pk=pk)
+        self.check_object_permissions(request, student)
+        course = CourseStudent.objects.exclude(course_status='active')
+        course.exclude(course_status='deleted')
+        ser_data = CourseStudentSerializer(instance=course, many=True)
+        if ser_data.is_valid():
+            return Response(ser_data.data, status=status.HTTP_200_OK)
+
+        return Response(ser_data.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class StudentTermCourseView(APIView):
+    permission_classes = [
+        permissions.IsAuthenticated,
+        IsITManagerOrEducationalAssistantWithSameFaculty | IsSupervisor,
+    ]
+
+    def get(self, request, pk):
+        student = Student.objects.get(pk=pk)
+        self.check_object_permissions(request, student)
+        course = CourseStudent.objects.filter(course_status='active')
+        ser_data = CourseStudentSerializer(instance=course, many=True)
+        if ser_data.is_valid():
+            return Response(ser_data.data, status=status.HTTP_200_OK)
+
+        return Response(ser_data.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class StudentRemainedTermView(APIView):
+    permission_classes = [
+        permissions.IsAuthenticated,
+        IsSameStudent,
+    ]
+
+    def get(self, request, pk):
+        student = Student.objects.get(pk=pk)
+        self.check_object_permissions(request, student)
+        ser_data = StudentSerializer(instance=student, many=True)
+        if ser_data.is_valid():
+            remaining_years = 5 - student.years
+
+            if remaining_years < 0:
+                remaining_years = 0
+
+            response_data = {
+                "remaining_years": remaining_years,
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
+
+        return Response(ser_data.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class EmergencyRemoveRequestView(APIView):
+    permission_classes = [permissions.IsAuthenticated, IsStudentForRemoval]
+
+    def post(self, request, *args, **kwargs):
+        ser_data = EmergencyRemoveSerializer(data=request.data, many=True)
+        self.check_object_permissions(request, ser_data.data)
+        if ser_data.is_valid():
+            ser_data.save()
+            return Response(ser_data.data, status=status.HTTP_200_OK)
+
+        return Response(ser_data.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def get(self, request, s_pk, c_pk):
+        student = Student.objects.get(pk=s_pk)
+        course = TermCourse.objects.get(pk=c_pk)
+        removal_request = EmergencyRemovalRequest.objects.filter(
+            student=student, course=course).first()
+        ser_data = EmergencyRemoveSerializer(instance=removal_request)
+        self.check_object_permissions(request, ser_data.data)
+        return Response(ser_data.data, status=status.HTTP_200_OK)
+
+    def put(self, request, s_pk, c_pk):
+        student = Student.objects.get(pk=s_pk)
+        course = TermCourse.objects.get(pk=c_pk)
+        removal_request = EmergencyRemovalRequest.objects.filter(
+            student=student, course=course).first()
+        ser_data = EmergencyRemoveSerializer(
+            instance=removal_request, data=request.data, partial=True)
+        self.check_object_permissions(request, ser_data.data)
+        if ser_data.is_valid():
+            ser_data.save()
+            return Response(ser_data.data, status=status.HTTP_200_OK)
+
+        return Response(ser_data.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, s_pk, c_pk):
+        student = Student.objects.get(pk=s_pk)
+        course = TermCourse.objects.get(pk=c_pk)
+        removal_request = EmergencyRemovalRequest.objects.filter(
+            student=student, course=course).first()
+        self.check_object_permissions(request, removal_request)
+        removal_request.delete()
+        return Response({'message': "request deleted"}, status=status.HTTP_200_OK)
+
+
+class CourseRemovalListView(APIView):
+    permission_classes = [
+        permissions.IsAuthenticated,
+        IsITManagerOrEducationalAssistantWithSameFaculty,
+        ]
+
+    def get(self, request, pk):
+        edu_assistant = EducationalAssistant.objects.get(pk=pk)
+        queryset = EmergencyRemovalRequest.objects.all()
+        self.check_permissions(request, edu_assistant)
+        ser_data = EmergencyRemoveSerializer(instance=queryset, many=True)
+        if ser_data.is_valid():
+            return Response(ser_data.data, status=status.HTTP_200_OK)
+
+        return Response(ser_data.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class CourseRemovalDetailView(APIView):
+    permission_classes = [
+        permissions.IsAuthenticated,
+        IsITManagerOrEducationalAssistantWithSameFaculty,
+        ]
+
+    def get(self, request, a_pk, e_pk):
+        edu_assistant = EducationalAssistant.objects.get(pk=a_pk)
+        queryset = EmergencyRemovalRequest.objects.get(pk=e_pk)
+        self.check_permissions(request, edu_assistant)
+        ser_data = EmergencyRemoveSerializer(instance=queryset, many=True)
+        if ser_data.is_valid():
+            return Response(ser_data.data, status=status.HTTP_200_OK)
+
+        return Response(ser_data.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def post(self, request, *args, **kwargs):
+        ser_data = EmergencyRemoveSerializer(data=request.data, many=True)
+        self.check_object_permissions(request, ser_data.data)
+        if ser_data.is_valid():
+            ser_data.save()
+            return Response(ser_data.data, status=status.HTTP_200_OK)
+
+        return Response(ser_data.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class TermRemoveRequestView(APIView):
+    permission_classes = [permissions.IsAuthenticated, IsStudentForRemoval]
+
+    def post(self, request, *args, **kwargs):
+        ser_data = TermRemoveSerializer(data=request.data, many=True)
+        self.check_object_permissions(request, ser_data.data)
+        if ser_data.is_valid():
+            ser_data.save()
+            return Response(ser_data.data, status=status.HTTP_200_OK)
+
+        return Response(ser_data.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def get(self, request, s_pk, t_pk):
+        student = Student.objects.get(pk=s_pk)
+        course = Term.objects.get(pk=t_pk)
+        removal_request = TermRemovalRequest.objects.filter(
+            student=student, course=course).first()
+        ser_data = TermRemoveSerializer(instance=removal_request)
+        self.check_object_permissions(request, ser_data.data)
+        return Response(ser_data.data, status=status.HTTP_200_OK)
+
+    def put(self, request, s_pk, c_pk):
+        student = Student.objects.get(pk=s_pk)
+        course = Term.objects.get(pk=c_pk)
+        removal_request = TermRemovalRequest.objects.filter(
+            student=student, course=course).first()
+        ser_data = TermRemoveSerializer(
+            instance=removal_request, data=request.data, partial=True)
+        self.check_object_permissions(request, ser_data.data)
+        if ser_data.is_valid():
+            ser_data.save()
+            return Response(ser_data.data, status=status.HTTP_200_OK)
+
+        return Response(ser_data.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, s_pk, c_pk):
+        student = Student.objects.get(pk=s_pk)
+        course = Term.objects.get(pk=c_pk)
+        removal_request = TermRemovalRequest.objects.filter(
+            student=student, course=course).first()
+        self.check_object_permissions(request, removal_request)
+        removal_request.delete()
+        return Response({'message': "request deleted"}, status=status.HTTP_200_OK)
+
+
+class TermRemovalListView(APIView):
+    permission_classes = [
+        permissions.IsAuthenticated,
+        IsITManagerOrEducationalAssistantWithSameFaculty,
+        ]
+
+    def get(self, request, pk):
+        edu_assistant = EducationalAssistant.objects.get(pk=pk)
+        queryset = TermRemovalRequest.objects.all()
+        self.check_permissions(request, edu_assistant)
+        ser_data = TermRemoveSerializer(instance=queryset, many=True)
+        if ser_data.is_valid():
+            return Response(ser_data.data, status=status.HTTP_200_OK)
+
+        return Response(ser_data.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class TermRemovalDetailView(APIView):
+    permission_classes = [
+        permissions.IsAuthenticated,
+        IsITManagerOrEducationalAssistantWithSameFaculty,
+        ]
+
+    def get(self, request, a_pk, e_pk):
+        edu_assistant = EducationalAssistant.objects.get(pk=a_pk)
+        queryset = TermRemovalRequest.objects.get(pk=e_pk)
+        self.check_permissions(request, edu_assistant)
+        ser_data = TermRemoveSerializer(instance=queryset, many=True)
+        if ser_data.is_valid():
+            return Response(ser_data.data, status=status.HTTP_200_OK)
+
+        return Response(ser_data.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def post(self, request, *args, **kwargs):
+        ser_data = EmergencyRemoveSerializer(data=request.data, many=True)
+        self.check_object_permissions(request, ser_data.data)
+        if ser_data.is_valid():
+            ser_data.save()
+            return Response(ser_data.data, status=status.HTTP_200_OK)
+
+        return Response(ser_data.errors, status=status.HTTP_400_BAD_REQUEST)

@@ -43,3 +43,21 @@ class IsSameProfessor(BasePermission):
         username = request.user.username
         professor = Professor.objects.get(username=username)
         return obj == professor 
+
+
+class IsStudentForRemoval(BasePermission):
+
+    def has_object_permission(self, request, view, obj):
+        user = request.user
+        return user.student_number == obj.student.student_number
+
+
+class IsSupervisor(permissions.BasePermission):
+    def has_permission(self, request, view):
+        user = request.user
+        return Professor.objects.exists(id=user.id)
+
+    def has_object_permission(self, request, view, obj):
+        user = request.user
+        return obj.supervisor.id == user.id
+
