@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from term.models import TermCourse, Term, RegistrationRequest
+from term.models import TermCourse, Term, RegistrationRequest, EnrollmentCertificateRequest
 from account.models import Student
 from datetime import datetime, date
 
@@ -17,7 +17,7 @@ class TermCourseSerializer(serializers.ModelSerializer) :
             "exam_time",
             "exam_place",
             "course_professor",
-        "course_capacity",
+            "course_capacity",
             "term",
         ]
         
@@ -116,3 +116,17 @@ class CourseSelectionStudentFormsSerializers(serializers.ModelSerializer) :
             "student",
             "courses",   
         ]
+        
+        
+class EnrollmentCertificateRequestSerializer(serializers.ModelSerializer) :
+    class Meta :
+        model = EnrollmentCertificateRequest
+        fields = [
+            'id',
+            'student',
+            'term',
+            'place_of_issue',
+            'enrollment_certificate',
+            
+        ]
+        

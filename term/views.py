@@ -1,17 +1,17 @@
 from rest_framework.viewsets import ModelViewSet
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from term.models import Term, TermCourse, RegistrationRequest, CourseStudent
-from term.serializers import CourseSelectionStudentFormsSerializers, TermCourseSerializer
+from term.models import EnrollmentCertificateRequest, Term, TermCourse, RegistrationRequest, CourseStudent
+from term.serializers import CourseSelectionStudentFormsSerializers, EnrollmentCertificateRequestSerializer, TermCourseSerializer
 from term.filters import TermCourseFilter
-from term.permissions import IsITManagerOrEducationalAssistantWithSameFaculty, IsSameStudent, IsSameProfessor
+from term.permissions import IsITManagerOrEducationalAssistantWithSameFaculty, IsSameStudent, IsSameProfessor, IsSameEducationalAssistant
 from rest_framework.response import Response
 from rest_framework import status, generics, views, serializers
 from rest_framework.exceptions import PermissionDenied
 
 from term.serializers import CourseSelectionSerializer, CourseSelectionCheckSerializer
 
-from account.models import Professor, Student
+from account.models import Professor, Student, EducationalAssistant
 
 from datetime import datetime, timedelta
 
@@ -535,4 +535,101 @@ class CourseSelectionStudentFormsDetailAPIView(views.APIView) :
         else :
             raise PermissionDenied("You are not allowed to see this student's registeration request.")
         
+        
+
+class EnrollmentCertificateRequestVeiwSet(ModelViewSet) :
+    permission_classes = [IsAuthenticated, IsSameStudent]
+    serializer_class = EnrollmentCertificateRequestSerializer
+    queryset = EnrollmentCertificateRequest.objects.all()
+
+    
+    def create(self, request, *args, **kwargs):
+        student = Student.objects.get(id=self.kwargs.get('s_pk'))
+        self.check_object_permissions(self.request, student)
+        data = {"student": self.kwargs.get('s_pk'), "term": Term.objects.all().last().id, "place_of_issue": request.data.get("place_of_issue")}
+        serializer = self.get_serializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+    
+    def get_queryset(self):
+        student_id = self.kwargs.get('s_pk')
+        student = Student.objects.get(id=student_id)
+        self.check_object_permissions(self.request, student)
+        term = Term.objects.all().last()
+        return EnrollmentCertificateRequest.objects.filter(term=term, student=student)
+    
+    
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        student_id = self.kwargs.get('s_pk')
+        student = Student.objects.get(id=student_id)
+        self.check_object_permissions(self.request, student)
+        return Response(serializer.data)
+    
+    
+    def get_object(self):
+        student_id = self.kwargs.get('s_pk')
+        student =  Student.objects.get(id=student_id)
+        self.check_object_permissions(self.request, student)
+        EnrollmentCertificate_Request = EnrollmentCertificateRequest.objects.filter(id=self.kwargs.get('pk'), student=student).first()
+        return EnrollmentCertificate_Request
+    
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+    
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        data = {"student": self.kwargs.get('s_pk'), "term": Term.objects.all().last().id, "place_of_issue": request.data.get("place_of_issue")}
+        serializer = self.get_serializer(instance, data=data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(serializer.data)
+    
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    
+    
+class EnrollmentCertificateRequestsAPIView(views.APIView) :
+    permission_classes = [IsAuthenticated, IsSameEducationalAssistant]
+    
+    def get(self, request, *args, **kwargs) :
+        pk = self.kwargs.get('pk')
+        eda = EducationalAssistant.objects.get(id=pk)
+        self.check_object_permissions(self.request, eda)
+        EnrollmentCertificate_Requests = EnrollmentCertificateRequest.objects.filter(term=Term.objects.all().last(), student__faculty=eda.faculty)
+        
+        serializer = EnrollmentCertificateRequestSerializer(EnrollmentCertificate_Requests, many=True)
+        return Response({"success": True, "EnrollmentCertificate_Requests" : serializer.data }, status=200)
+
+    
+class EnrollmentCertificateRequestsDetailAPIView(views.APIView) :
+    permission_classes = [IsAuthenticated, IsSameEducationalAssistant]
+    
+    def get(self, request, *args, **kwargs) :
+        a_pk = self.kwargs.get('a_pk')
+        pk = self.kwargs.get('pk')
+        eda = EducationalAssistant.objects.get(id=a_pk)
+        enrollment_certificate = EnrollmentCertificateRequest.objects.get(id=pk)
+        self.check_object_permissions(self.request, eda)
+        if eda.faculty == enrollment_certificate.student.faculty :
+            serializer = EnrollmentCertificateRequestSerializer(enrollment_certificate)
+            return Response({"success": True, "EnrollmentCertificate_Request" : serializer.data }, status=200)
+        else :
+            raise PermissionDenied("You are not allowed to see this student's EnrollmentCertificate request.")
+        
+    
+    # def post(self, request, *args, **kwargs) :
+    #     a_pk = self.kwargs.get('a_pk')
+    #     pk = self.kwargs.get('pk')
+    #     eda = EducationalAssistant.objects.get(id=a_pk)
+    #     enrollment_certificate = EnrollmentCertificateRequest.objects.get(id=pk)
+    #     self.check_object_permissions(self.request, eda)
         

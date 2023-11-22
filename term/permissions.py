@@ -43,3 +43,13 @@ class IsSameProfessor(BasePermission):
         username = request.user.username
         professor = Professor.objects.get(username=username)
         return obj == professor 
+    
+class IsSameEducationalAssistant(BasePermission) :
+    def has_permission(self, request, view) :
+        username = request.user.username
+        return request.user.is_authenticated and EducationalAssistant.objects.filter(username=username).exists()
+    
+    def has_object_permission(self, request, view, obj) :
+        username = request.user.username
+        eda = EducationalAssistant.objects.get(username=username)
+        return obj == eda

@@ -125,9 +125,9 @@ class TermRemovalRequest(models.Model) :
 
 class EnrollmentCertificateRequest(models.Model) :
     student = models.ForeignKey(Student, on_delete=models.CASCADE)
-    enrollment_certificate = models.FileField() # should be editted
+    enrollment_certificate = models.FileField(null=True, blank=True) # should be editted
     term = models.ForeignKey(Term, on_delete=models.CASCADE)
-    place_of_issue = models.CharField(max_length=100)
+    place_of_issue = models.TextField()
     
     
     
