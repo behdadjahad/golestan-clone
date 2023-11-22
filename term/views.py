@@ -6,7 +6,7 @@ from term.models import *
 from term.serializers import *
 from account.serializers import *
 from term.filters import TermCourseFilter
-from term.permissions import IsITManagerOrEducationalAssistantWithSameFaculty, IsSameStudent, IsSameProfessor
+from term.permissions import IsITManagerOrEducationalAssistantWithSameFaculty, IsSameEducationalAssistant, IsSameStudent, IsSameProfessor, IsStudentForRemoval, IsSupervisor
 from rest_framework.response import Response
 from rest_framework import status, generics, views, serializers
 from rest_framework.exceptions import PermissionDenied
