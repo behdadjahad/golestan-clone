@@ -220,3 +220,16 @@ class OutputReconsiderationProfessorSerializer(serializers.ModelSerializer):
     class Meta:
         model = ReconsiderationRequest
         fields = "__all__"
+
+
+class EnrollmentCertificateRequestSerializer(serializers.ModelSerializer) :
+    class Meta :
+        model = EnrollmentCertificateRequest
+        fields = [
+            'id',
+            'student',
+            'term',
+            'place_of_issue',
+            'enrollment_certificate',
+            
+        ]
