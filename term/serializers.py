@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from term.models *
+from term.models import *
 from account.models import Student
 from datetime import datetime, date
 

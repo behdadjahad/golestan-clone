@@ -17,7 +17,7 @@ from account.models import Professor, Student
 from datetime import datetime, timedelta
 
 from django.db import transaction
-from .models import CourseStudent
+from .models import CourseStudent, ReconsiderationRequest
 
 
 class TermCourseViewSet(ModelViewSet) :
@@ -184,69 +184,6 @@ class CourseSelectionCheckAPIView(views.APIView) :
             return Response({"success": True}, status=200)
                  
                     
-        else :
-            secondlast_term = Term.objects.all().reverse()[1]
-            if student.term_score(secondlast_term) >= 17 :
-                for pk in request.data['course'] : # counting units of selected courses in the request
-                    data =  {'course' : [pk] ,'option': request.data['option']}
-                    serializer = CourseSelectionCheckSerializer(data=data, context={'pk': self.kwargs.get('pk')})
-                    serializer.is_valid(raise_exception=True)
-                    termcourse = TermCourse.objects.get(id=pk)
-                    if data['option'] == 'add' :
-                        units += termcourse.name.units
-                        if units >= 24 :
-                            raise serializers.ValidationError("You can not select more than 24 units.")
-                        elif termcourse.course_capacity == 0 :
-                            raise serializers.ValidationError("The selected course is full.")
-                        
-                        for time in termcourse.class_days_and_times :
-                            day = time['day']
-                            start_time = datetime.strptime(time['start_time'], "%H:%M")
-                            end_time = datetime.strptime(time['end_time'], "%H:%M")
-                            if day in date_and_times :
-                                times_in_a_day = date_and_times[day]
-                                for time_ in times_in_a_day :
-                                    start = datetime.strptime(time_[0], "%H:%M")
-                                    end = datetime.strptime(time_[1], "%H:%M")
-                                    if (start_time < end and start_time > start) or (end_time > start and end_time < end) :
-                                        raise serializers.ValidationError(f"the selected { termcourse } course interferes with previous courses")
-                                date_and_times[day].append((time['start_time'], time['end_time']))
-                                
-                            else :
-                                date_and_times[day] = [(time['start_time'], time['end_time'])]
-                            
-                        
-                        start_added_exam_time = datetime(termcourse.exam_time.year, termcourse.exam_time.month, termcourse.exam_time.day, termcourse.exam_time.hour, termcourse.exam_time.minute)
-                        end_added_exam_time = start_added_exam_time + timedelta(hours=2)
-                        for exam_time in exams_time :
-                            start = exam_time[0]
-                            end = exam_time[1]
-                            if (start_added_exam_time < end and start_added_exam_time > start) or (end_added_exam_time > start and end_added_exam_time < end) :
-                                raise serializers.ValidationError(f"the selected { termcourse } course's exam time interferes with previous courses")
-                        exams_time.append((start_added_exam_time, end_added_exam_time))
-
-                        
-                    elif data['course'] == 'delete' :
-                        units -= termcourse.name.units
-                        
-                        for time in termcourse.class_days_and_times :
-                            day = time['day']
-                            date_and_times[day].remove((time['start_time'], time['end_time']))
-                        
-                        start_deleted_exam_time = datetime(termcourse.exam_time.year, termcourse.exam_time.month, termcourse.exam_time.day, termcourse.exam_time.hour, termcourse.exam_time.minute)
-                        end_deleted_exam_time = start_deleted_exam_time + timedelta(hours=2)
-                        for exam_time in exams_time :
-                            start = exam_time[0]
-                            end = exam_time[1]
-                            exams_time.remove((start_deleted_exam_time, end_deleted_exam_time))
-
-                            
-
-            else :   
-                raise serializers.ValidationError("You can not select more than 20 units.")
-            
-            return Response({"success": True}, status=200)
-                 
                     
         else :
             secondlast_term = Term.objects.all().reverse()[1]
@@ -1434,7 +1371,7 @@ class CourseSubstitutionStudentFormsDetailAPIView(views.APIView) :
             raise PermissionDenied("You are not allowed to see this student's substitution request.")
     
 
- class ReconsiderationRequestStudentView(APIView):
+class ReconsiderationRequestStudentView(APIView):
     # permission_classes = [IsAuthenticated, IsSameStudent]
     serializer_class = InputReconsiderationStudentSerializer
 
