@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from term.models import TermCourse, Term, RegistrationRequest
+from term.models import TermCourse, Term, RegistrationRequest, RemovalAndExtensionRequest
 from account.models import Student
 from datetime import datetime, date
 
@@ -17,7 +17,7 @@ class TermCourseSerializer(serializers.ModelSerializer) :
             "exam_time",
             "exam_place",
             "course_professor",
-        "course_capacity",
+            "course_capacity",
             "term",
         ]
         
@@ -98,6 +98,12 @@ class CourseSelectionCheckSerializer(serializers.Serializer) :
                 raise serializers.ValidationError(f"Course { course } is not offered by your faculty.")
         
         elif attrs['option'] == 'delete' :
+            
+            check = course in RegistrationRequest.objects.filter(term=Term.objects.all().last(), student=student).first().courses.all()
+            if not check :
+                raise serializers.ValidationError(f"You haven't registered { course } course.")
+            
+            
             # 4th validation
             registered_courses = RegistrationRequest.objects.filter(term=Term.objects.all().last(), student=student).first().courses.all()
             for course_ in  registered_courses:
@@ -106,13 +112,88 @@ class CourseSelectionCheckSerializer(serializers.Serializer) :
             
         return attrs
             
+        
 
-class CourseSelectionStudentFormsSerializers(serializers.ModelSerializer) :
+class CourseSubstitutionSerializer(serializers.ModelSerializer) :
     class Meta :
-        model = RegistrationRequest
+        model = RemovalAndExtensionRequest
         fields = [
-            "confirmation_status",
             "term",
             "student",
-            "courses",   
+            "removed_courses",
+            "extended_courses",
+            "confirmation_status",
         ]
+
+    def validate(self, attrs):
+        term = attrs['term']
+        start = term.repairing_unit_selection_start_time
+        end = term.repairing_unit_selection_end_time
+        now = datetime.now()
+        now = datetime(now.year, now.month, now.day, now.hour, now.minute)
+        start = datetime(start.year, start.month, start.day, start.hour, start.minute)
+        end = datetime(end.year, end.month, end.day, end.hour, end.minute)
+        if not (now < end and now > start):
+            raise serializers.ValidationError("You are ubable to access course substitution. Invalid datetime range.")
+        return attrs
+    
+
+class CourseSubstitutionCheckSerializer(serializers.Serializer) :
+    OPTION_CHOICES = (
+        ('add', 'Add'),
+        ('delete', 'Delete'),
+    )
+    course = serializers.PrimaryKeyRelatedField(many=True, queryset=TermCourse.objects.all())
+    option = serializers.ChoiceField(choices=OPTION_CHOICES)
+    
+    def validate(self, attrs) :
+        student = Student.objects.get(pk=self.context['pk'])
+        course = attrs['course'][0]
+        
+        if attrs['option'] == 'add' :
+            # 1st validation
+            precourses = course.name.pre_requisites.all()
+            for course in precourses :
+                termcourse = course.termcourse_set.filter(term=Term.objects.all().last()).first()
+                ispassed = termcourse.coursestudent_set.filter(student=student, course_status='passed').exists()
+                if not ispassed :
+                    raise serializers.ValidationError(f"You haven't passed { course } course.")
+                
+            # 2nd validation
+            repeated1 = course in RegistrationRequest.objects.filter(term=Term.objects.all().last(), student=student).first().courses.all()
+            repeated2 = course in RemovalAndExtensionRequest.objects.filter(term=Term.objects.all().last(), student=student).first().extended_courses.all()
+            repeated3 = course in RemovalAndExtensionRequest.objects.filter(term=Term.objects.all().last(), student=student).first().removed_courses.all()
+            passed = course.coursestudent_set.filter(student=student, course_status='passed').exists()
+            if (repeated1 or repeated2 or passed) and (not repeated3):
+                raise serializers.ValidationError(f"You have already registered or passed { course } course.") 
+            
+            # 8th validation
+            stu_faculty = student.faculty # it can be editted !!!!
+            course_faculty = course.name.faculty
+            if stu_faculty != course_faculty :
+                raise serializers.ValidationError(f"Course { course } is not offered by your faculty.")
+        
+        elif attrs['option'] == 'delete' :
+          
+            repeated = course in RemovalAndExtensionRequest.objects.filter(term=Term.objects.all().last(), student=student).first().removed_courses.all()
+            if repeated :
+                raise serializers.ValidationError(f"You have already removed { course } course.") 
+            
+            check1 = course in RegistrationRequest.objects.filter(term=Term.objects.all().last(), student=student).first().courses.all()
+            check2 = course in RemovalAndExtensionRequest.objects.filter(term=Term.objects.all().last(), student=student).first().extended_courses.all()
+            if not (check1 or check2) :
+                raise serializers.ValidationError(f"You haven't registered { course } course.")
+            
+            # 4th validation
+            registered_courses1 = RegistrationRequest.objects.filter(term=Term.objects.all().last(), student=student).first().courses.all()
+            for course_ in  registered_courses1:
+                if course.name in course_.name.co_requisites.all() :
+                    raise serializers.ValidationError(f"The { course } course is the co-requisites of {course_} course")
+            
+            registered_courses2 = RemovalAndExtensionRequest.objects.filter(term=Term.objects.all().last(), student=student).first().extended_courses.all()
+            for course_ in  registered_courses2:
+                if course.name in course_.name.co_requisites.all() :
+                    raise serializers.ValidationError(f"The { course } course is the co-requisites of {course_} course")
+            
+            
+        return attrs
