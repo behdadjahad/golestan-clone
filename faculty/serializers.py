@@ -35,4 +35,3 @@ class ApprovedCourseSerializer(serializers.ModelSerializer) :
             representation['co_requisites'] = [course.course_name for course in instance.co_requisites.all()]
             return representation  
     
-    

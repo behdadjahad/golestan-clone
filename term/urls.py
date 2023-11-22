@@ -17,6 +17,10 @@ urlpatterns = [
     path('student/<int:pk>/course-selection/send/', views.CourseSelectionSendAPIView.as_view(), name='course-selection-send'),
     path('professor/<int:pk>/students-selection-forms/', views.CourseSelectionStudentFormsAPIView.as_view(), name='students-selection-forms'),
     path('professor/<int:pk>/students-selection-forms/<int:s_pk>/', views.CourseSelectionStudentFormsDetailAPIView.as_view(), name='student-selection-form'),
+
+    path('student/<int:std_id>/course/<int:co_id>/reconsideration/', views.ReconsiderationRequestStudentView.as_view(), name="student-reconsideration"),
+    path('professor/<int:std_id>/course/<int:co_id>/reconsideration/', views.ReconsiderationRequestProfessorView.as_view(), name="student-reconsideration"),
+
     
     path('student/<int:pk>/course-substitution/create/', views.CourseSubstitutionCreationFormAPIView.as_view(), name='course-substitution-create'),
     path('student/<int:pk>/course-substitution/', views.CourseSubstitutionListAPIView.as_view(), name='course-substitution-list'),
