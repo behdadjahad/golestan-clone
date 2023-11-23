@@ -1,17 +1,19 @@
 version: "3.8"
 
 services:
+
   db:
-    image: postgres
-    container_name: pgdb
+    image: postgres:13
+    container_name: db
     restart: always
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DATABASE=golestan
+      - POSTGRES_DB=golestan
+      - "POSTGRES_HOST_AUTH_METHOD=trust"
     expose:
       - 5432
-    volumes:
-      - ./postgres_data:/var/lib/postgresql/data
   
   pgadmin:
     container_name: pgadmin
@@ -29,11 +31,17 @@ services:
     build: ./
     container_name: app
     restart: always
+    environment:
+      - DB_HOST=db
+      - DB_NAME=golestan
+      - DB_USER=postgres
+      - DB_PASS=postgres
     ports:
       - 8000:8000
     volumes:
-      - type: 'bind'
-        source: './volumes/app'
-        target: '/app'
+      - ./logs:/app/logs
     depends_on:
       - db
+  
+volumes:
+  postgres_data:
